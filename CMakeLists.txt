@@ -7,7 +7,7 @@ if(UNIX)
 endif()
 
 #set(SOURCE_EXE src/main.cpp)
-add_compile_definitions(FILE_INPUT)
+add_compile_definitions("FILE_INPUT")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -fsanitize=address)
     link_libraries(-g -fsanitize=address)

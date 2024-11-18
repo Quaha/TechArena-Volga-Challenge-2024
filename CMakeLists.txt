@@ -6,13 +6,8 @@ if(UNIX)
     set(CMAKE_CXX_FLAGS "-std=c++2a -fopenmp")
 endif()
 
-set(SOURCE_EXE src/main.cpp)
-add_library(lib STATIC
-            include/edge.h
-            include/checker.h
-            include/tester.h
-            src/checker.cpp
-            src/tester.cpp)
+#set(SOURCE_EXE src/main.cpp)
+add_compile_definitions(FILE_INPUT)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -fsanitize=address)
     link_libraries(-g -fsanitize=address)
@@ -22,7 +17,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     link_libraries(-O3)
 endif()
 
-add_executable(techarena ${SOURCE_EXE})
-target_link_libraries(techarena lib)
+file(GLOB SOURCES "src/*.cpp")
+add_executable(techarena ${SOURCES})
+target_include_directories(techarena PRIVATE include)
+#target_link_libraries(techarena lib)
 
 message(STATUS "C++ flags: ${CMAKE_CXX_FLAGS}")

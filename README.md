@@ -8,3 +8,6 @@ Optimization Challenge Solution - Repository by team "everybody stay panic"
   
   **UPD:** Был найден [репозиторий](https://github.com/Straple/Techarena2024/tree/main) одной из команд с MSU TechArena 2024, там есть пример необходимого скрипта. Нужно сделать что-то похожее.
 * **14.11.2024** Нужно бы также, вероятно, заранее разобраться со структурой проекта (пока нет задания это нелегко). Можно сделать условные папки `include`, `src`, `checker`, `tests`, `builder` и, вероятно, добавить CMake файлы для удобства.
+
+* **18.11.2024** Основная структура проекта готова, написан merger.
+* **18.11.2024** Random shuffle: 52333.928

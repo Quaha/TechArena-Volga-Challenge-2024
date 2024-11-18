@@ -2,6 +2,8 @@
 Optimization Challenge Solution - Repository by team "everybody stay panic"
 ## General:
 * [Competition website](https://techarena.unn.ru/)
+* [Standings](https://codeforces.com/spectator/ranklist/d4a9d46a4854d6ea249a4c207b20354f)
+* [Testing system](https://volga2024.contest.codeforces.com/group/uJZlaL3LbH/contests)
 * [Statements (None)]()
 ## Development Notes [RU]:
 * **14.11.2024** Нужно написать скрипт, который объединяет несколько .h и .cpp файлов в один .cpp файл. Желательно, чтобы можно было указать папки, откуда брать файлы.

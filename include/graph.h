@@ -3,6 +3,8 @@
 #include <cstddef>
 using std::vector;
 
+// #define double long double
+
 struct edge {
     int u,v;
     double w;

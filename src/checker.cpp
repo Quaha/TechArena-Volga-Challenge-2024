@@ -22,6 +22,17 @@ struct DSU {
     }
 };
 
+struct KahanSum {
+    double s = 0.0;
+    double e = 0.0;
+    void add(double x) {
+        double d = x - e;
+        double t = s + d;
+        e = (t - s) - d;
+        s = t;
+    }
+};
+
 double penalty(double c, double M, double F) {
     if (c <= M) return 0.0;
     return F * (c - M);
@@ -37,13 +48,8 @@ double cost2(double c1, double c2, double c_result, double M, double F) {
 
 double check(const vector<int> &p, const graph &g, vector<double> c,
              int n, int m, double M, double F) {
-    double c_log_sum = 0.0;
-    double A = 0.0;
+    KahanSum A;
     DSU dsu(n);
-
-    for (int i = 0; i < n; ++i) {
-        c_log_sum += log(c[i]);
-    }
 
     for (int ei : p) {
         auto [u, v, w] = g.edges[ei];
@@ -51,17 +57,17 @@ double check(const vector<int> &p, const graph &g, vector<double> c,
         v = dsu.get(v);
         if (u == v) {
             double c_result = w * c[u];
-            A += cost1(c[u], c_result, M, F);
+            A.add(cost1(c[u], c_result, M, F));
             c[u] = c_result;
         } else {
             double c1 = c[u];
             double c2 = c[v];
             double c_result = w * c1 * c2;
-            A += cost2(c[u], c[v], c_result, M, F);
+            A.add(cost2(c[u], c[v], c_result, M, F));
             dsu.merge(u,v);
             c[dsu.get(u)] = c_result;
         }
     }
 
-    return m * (c_log_sum / log(A));
+    return A.s;
 }

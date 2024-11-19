@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <vector>
 #include <cstddef>
 using std::vector;
@@ -13,6 +14,18 @@ struct edge {
 struct graph {
     vector<vector<int>> adj;
     vector<edge> edges;
-    graph(size_t n);
+    vector<double> c;
+    int n,m;
+    double M,F;
+    graph(int n);
     void add_edge(int u, int v, double w);
+};
+
+struct DSU {
+    vector<int> root, sz;
+    DSU();
+    DSU(int n);
+    void init(int n);
+    int get(int x);
+    void merge(int x, int y);
 };

@@ -1,12 +1,12 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <numeric>
 #include <random>
 #include <chrono>
 #include <cfloat>
 #include "tester.h"
 #include "checker.h"
+#include "solver.h"
 using namespace std;
 
 template <typename T>
@@ -21,14 +21,12 @@ void minus_one(vector<int> &p) {
 }
 
 void run_tests() {
-    int n,m; cin >> n >> m;
-    double M, F; cin >> M >> F;
-
-    vector<double> c(n);
-    for (int i = 0; i < n; ++i) cin >> c[i];
-
+    int n; cin >> n;
     graph g(n);
-    for (int i = 0; i < m; ++i) {
+    cin >> g.m >> g.M >> g.F;
+    for (int i = 0; i < n; ++i) cin >> g.c[i];
+
+    for (int i = 0; i < g.m; ++i) {
         int u,v;
         double s;
         cin >> u >> v >> s;
@@ -38,11 +36,11 @@ void run_tests() {
 
     double c_log_sum = 0.0;
     for (int i = 0; i < n; ++i) {
-        c_log_sum += log(c[i]);
+        c_log_sum += log(g.c[i]);
     }
-    c_log_sum *= m;
+    c_log_sum *= g.m;
 
-    vector<int> p(m), p_min;
+    vector<int> p(g.m), p_min;
     iota(p.begin(), p.end(), 0);
     double min_score = DBL_MAX;
     mt19937_64 rng{random_device{}()};
@@ -53,20 +51,21 @@ void run_tests() {
         return (current - start).count() / 1000000000.0;
     };
 
+    p_min = solve_edge_blocking_dp(g);
 
-    int64_t iterations_passed = 0;
-    while (get_time_seconds() < 4.9) {
-        shuffle(p.begin(), p.end(), rng);
-        double score = check(p, g, c, n, m, M, F);
-        if (score < min_score) {
-            p_min = p;
-            min_score = score;
-        }
-        ++iterations_passed;
-    }
-    cerr << "Iterations passed: " << iterations_passed << '\n';
+    // int64_t iterations_passed = 0;
+    // while (get_time_seconds() < 4.9) {
+    //     shuffle(p.begin(), p.end(), rng);
+    //     double score = check(p, g);
+    //     if (score < min_score) {
+    //         p_min = p;
+    //         min_score = score;
+    //     }
+    //     // ++iterations_passed;
+    // }
+    // cerr << "Iterations passed: " << iterations_passed << '\n';
 
-    print_vector(p_min, 0, m); cout << '\n';
+    print_vector(p_min, 0, g.m); cout << '\n';
 
     // cout << "Best score: " << max_score << '\n';
     // cout << "Permutation: "; print_vector(p_max, 0, m); cout << '\n';

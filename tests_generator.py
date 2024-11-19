@@ -5,7 +5,7 @@ folder_name = 'test_samples'
 
 
 class RandomGenerator:
-    def __init__(self, seed, a=1664524365, c=10139042347423, m=2 ** 64 - 1):
+    def __init__(self, seed, a=6364136223846793005, c=10139042347423, m=2 ** 64 - 1):
         self.seed = seed
         self.a = a
         self.c = c

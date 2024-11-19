@@ -1,15 +1,20 @@
-#include "checker.h"
+#include "includes.h"
+
+#include "solver.h"
 #include "tester.h"
-#include <cstdio>
+
 using namespace std;
 
-// #define FILE_INPUT
+#define INPUT
 
 int main(int argc, char *argv[]) {
-#ifdef FILE_INPUT
-    // freopen("../test_samples/3.txt", "r", stdin);
-    freopen("../input.txt", "r", stdin);
+#ifdef INPUT
+    //freopen("../input.txt", "r", stdin);
+    //freopen("../output.txt", "w", stdout);
+    solve();
 #endif
+#ifndef INPUT
     run_tests();
+#endif
 }
 

@@ -1,5 +1,7 @@
 graph.h
 graph.cpp
+util.cpp
 checker.cpp
+solver.cpp
 tester.cpp
 main.cpp

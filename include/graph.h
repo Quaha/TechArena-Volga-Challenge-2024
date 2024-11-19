@@ -4,21 +4,22 @@
 #include <cstddef>
 using std::vector;
 
-// #define double long double
+using fp = long double;
 
 struct edge {
     int u,v;
-    double w;
+    fp w;
 };
 
 struct graph {
     vector<vector<int>> adj;
     vector<edge> edges;
-    vector<double> c;
+    vector<fp> c;
     int n,m;
-    double M,F;
+    fp M,F;
+    graph();
     graph(int n);
-    void add_edge(int u, int v, double w);
+    void add_edge(int u, int v, fp w);
 };
 
 struct DSU {

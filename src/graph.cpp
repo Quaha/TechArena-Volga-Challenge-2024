@@ -3,8 +3,9 @@
 #include <utility>
 using namespace std;
 
+graph::graph() {}
 graph::graph(int n) : n(n), adj(n), c(n) {}
-void graph::add_edge(int u, int v, double w) {
+void graph::add_edge(int u, int v, fp w) {
     adj[u].push_back(edges.size());
     adj[v].push_back(edges.size());
     edges.emplace_back(u, v, w);

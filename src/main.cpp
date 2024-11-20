@@ -3,8 +3,6 @@
 #include "solver.h"
 #include "tester.h"
 
-using namespace std;
-
 int main(int argc, char *argv[]) {
 #ifdef INPUT
     //freopen("../input.txt", "r", stdin);

@@ -1,9 +1,11 @@
 #pragma once
 #include <algorithm>
-#include <vector>
+#include <fstream>
 #include <limits>
 #include <cstddef>
+#include <vector>
 using std::vector;
+using std::istream;
 
 using fp = long double;
 
@@ -22,6 +24,8 @@ struct graph {
     graph(int n);
     void add_edge(int u, int v, fp w);
 };
+
+graph read_input(istream &ist);
 
 struct DSU {
     vector<int> root, sz;

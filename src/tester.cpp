@@ -22,22 +22,6 @@ void minus_one(vector<int> &p) {
     for (int &x : p) --x;
 }
 
-graph read_input(istream &ist) {
-    int n; ist >> n;
-    graph g(n);
-    ist >> g.m >> g.M >> g.F;
-    for (int i = 0; i < n; ++i) ist >> g.c[i];
-
-    for (int i = 0; i < g.m; ++i) {
-        int u,v;
-        fp s;
-        ist >> u >> v >> s;
-        --u, --v;
-        g.add_edge(u, v, s);
-    }
-    return g;
-}
-
 void run_tests() {
     // int num_of_tests = 1;
 #ifdef RUN_TESTS

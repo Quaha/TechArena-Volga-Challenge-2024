@@ -1,5 +1,6 @@
 #include "checker.h"
 #include "tester.h"
+#include "param_search.h"
 #include <cstdio>
 using namespace std;
 
@@ -10,6 +11,11 @@ int main(int argc, char *argv[]) {
     freopen("../test_samples/3.txt", "r", stdin);
     // freopen("../input.txt", "r", stdin);
 #endif
+#ifdef PARAM_SEARCH
+    param_search();
+#endif
+#ifndef PARAM_SEARCH
     run_tests();
+#endif
 }
 

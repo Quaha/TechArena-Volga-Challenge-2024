@@ -97,34 +97,43 @@ vector<vector<int>> get_connected_components(const graph &g) {
     }
     return comp;
 }
-using namespace std;
 
-fp penalty(fp c, fp M, fp F) {
+// inline fp penalty(fp c, fp M, fp F);
+// inline fp cost1(fp c, fp c_result, fp M, fp F);
+// inline fp cost2(fp c1, fp c2, fp c_result, fp M, fp F);
+
+inline fp penalty(fp c, fp M, fp F) {
     if (c <= M) return 0.0;
     return F * (c - M);
 }
 
-fp cost1(fp c, fp c_result, fp M, fp F) {
+inline fp cost1(fp c, fp c_result, fp M, fp F) {
     return c + c_result + penalty(c_result, M, F);
 }
 
-fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
+inline fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
     return c1 + c2 + c_result + penalty(c_result, M, F);
 }
 
+vector<int> block_dp(const graph &g, const vector<int> &edges);
+
+using namespace std;
+
+const int MAX_M = 21;
+
 #ifndef RUN_TESTS
-DSU mask_dsu[1 << 21];
-vector<fp> mask_c[1 << 21];
-fp dp[1 << 21];
-int dp_arg[1 << 21];
+DSU mask_dsu[1 << MAX_M];
+vector<fp> mask_c[1 << MAX_M];
+fp dp[1 << MAX_M];
+int dp_arg[1 << MAX_M];
 #endif
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {
 #ifdef RUN_TESTS
-    vector<DSU           > mask_dsu(1 << 21);
-    vector<vector<fp>> mask_c(1 << 21);
-    vector<fp        > dp(1 << 21);
-    vector<int           > dp_arg(1 << 21);
+    vector<DSU           > mask_dsu(1 << MAX_M);
+    vector<vector<fp>> mask_c(1 << MAX_M);
+    vector<fp        > dp(1 << MAX_M);
+    vector<int           > dp_arg(1 << MAX_M);
 #endif
     int m = edges.size();
     mask_dsu[0].init(g.n);
@@ -187,6 +196,7 @@ struct KahanSum {
     fp s = 0.0;
     fp e = 0.0;
     void add(fp x) {
+        s += x;
         fp d = x - e;
         fp t = s + d;
         e = (t - s) - d;
@@ -194,26 +204,31 @@ struct KahanSum {
     }
 };
 
+DSU score_dsu(200);
+fp score_c[200];
+
 fp calculate_score(const vector<int> &p, const graph &g) {
     KahanSum A;
-    DSU dsu(g.n);
-    vector<fp> c = g.c;
+    // DSU dsu(g.n);
+    score_dsu.init(g.n);
+    for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
+    // score_c = g.c;
 
     for (int ei : p) {
         auto [u, v, w] = g.edges[ei];
-        u = dsu.get(u);
-        v = dsu.get(v);
+        u = score_dsu.get(u);
+        v = score_dsu.get(v);
         if (u == v) {
-            fp c_result = w * c[u];
-            A.add(cost1(c[u], c_result, g.M, g.F));
-            c[u] = c_result;
+            fp c_result = w * score_c[u];
+            A.add(cost1(score_c[u], c_result, g.M, g.F));
+            score_c[u] = c_result;
         } else {
-            fp c1 = c[u];
-            fp c2 = c[v];
+            fp c1 = score_c[u];
+            fp c2 = score_c[v];
             fp c_result = w * c1 * c2;
-            A.add(cost2(c[u], c[v], c_result, g.M, g.F));
-            dsu.merge(u,v);
-            c[dsu.get(u)] = c_result;
+            A.add(cost2(score_c[u], score_c[v], c_result, g.M, g.F));
+            score_dsu.merge(u,v);
+            score_c[score_dsu.get(u)] = c_result;
         }
     }
 
@@ -268,17 +283,16 @@ vector<int> solve_genetic(const graph &g) {
         return (current - start).count() / 1000000000.0;
     };
     
-    const int iterations = 1000;
-    const int max_pop_size = 500;
-    const int mutations_per_iter = 20;
-    const int selection_remain = 100;
+    constexpr int max_pop_size = 1000;
+    constexpr int mutations_per_iter = 20;
+    constexpr int selection_remain = 100;
 
     vector<pair<fp, vector<int>>> pop;
     pop.reserve(max_pop_size);
 
     vector<int> p_ans(g.m);
     fp min_score = numeric_limits<fp>::max();
-    auto selection = [&]() {
+    auto selection = [&pop, selection_remain, &min_score, &p_ans]() {
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
         });
@@ -329,9 +343,9 @@ vector<int> solve_genetic(const graph &g) {
     selection();
     // cout << "Iteration 0, best score: " << pop[0].first << endl;
 
-    // int iter_count = 0;
+    int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
-    while (get_time_seconds() < 4.85) {
+    while (get_time_seconds() < 4.88) {
         for (int i = selection_remain; i < max_pop_size; ++i) {
             int l = unif_pos(rng);
             int r = unif_pos(rng);
@@ -346,8 +360,8 @@ vector<int> solve_genetic(const graph &g) {
             pop[pop_i].first = calculate_score(pop[pop_i].second, g);
         }
         selection();
-        // ++iter_count;
-        // cout << "Iteration " << ga_iter + 1 << ", best score: " << pop[0].first << endl;
+        ++iter_count;
+        // cout << "Iteration " << iter_count << ", best score: " << pop[0].first << endl;
     }
     // cout << iter_count << '\n';
     return p_ans;

@@ -50,24 +50,22 @@ vector<int> solve_dp(const graph &g) {
 // genetic algorithm
 
 
-vector<int> solve_genetic(const graph &g) {
+vector<int> solve_genetic(const graph &g,
+                          int max_pop_size,
+                          int mutations_per_iter,
+                          int selection_remain) {
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
         return (current - start).count() / 1000000000.0;
     };
-    
-    const int iterations = 1000;
-    const int max_pop_size = 500;
-    const int mutations_per_iter = 20;
-    const int selection_remain = 100;
 
     vector<pair<fp, vector<int>>> pop;
     pop.reserve(max_pop_size);
 
     vector<int> p_ans(g.m);
     fp min_score = numeric_limits<fp>::max();
-    auto selection = [&]() {
+    auto selection = [&pop, selection_remain, &min_score, &p_ans]() {
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
         });
@@ -118,9 +116,9 @@ vector<int> solve_genetic(const graph &g) {
     selection();
     // cout << "Iteration 0, best score: " << pop[0].first << endl;
 
-    // int iter_count = 0;
+    int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
-    while (get_time_seconds() < 4.85) {
+    while (get_time_seconds() < 4.88) {
         for (int i = selection_remain; i < max_pop_size; ++i) {
             int l = unif_pos(rng);
             int r = unif_pos(rng);
@@ -135,8 +133,8 @@ vector<int> solve_genetic(const graph &g) {
             pop[pop_i].first = calculate_score(pop[pop_i].second, g);
         }
         selection();
-        // ++iter_count;
-        // cout << "Iteration " << ga_iter + 1 << ", best score: " << pop[0].first << endl;
+        ++iter_count;
+        // cout << "Iteration " << iter_count << ", best score: " << pop[0].first << endl;
     }
     // cout << iter_count << '\n';
     return p_ans;

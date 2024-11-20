@@ -12,6 +12,22 @@ void graph::add_edge(int u, int v, fp w) {
     edges.emplace_back(u, v, w);
 }
 
+graph read_input(istream &ist) {
+    int n; ist >> n;
+    graph g(n);
+    ist >> g.m >> g.M >> g.F;
+    for (int i = 0; i < n; ++i) ist >> g.c[i];
+
+    for (int i = 0; i < g.m; ++i) {
+        int u,v;
+        fp s;
+        ist >> u >> v >> s;
+        --u, --v;
+        g.add_edge(u, v, s);
+    }
+    return g;
+}
+
 DSU::DSU() {}
 DSU::DSU(int n) {
     init(n);

@@ -1,5 +1,6 @@
 graph.h
 graph.cpp
+util.h
 util.cpp
 checker.cpp
 solver.cpp

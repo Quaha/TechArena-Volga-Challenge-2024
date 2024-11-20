@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <cfloat>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -9,6 +8,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <random>
 #include <utility>
@@ -130,7 +130,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
     for (int mask = 1; mask < (1 << m); ++mask) {
-        dp[mask] = DBL_MAX;
+        dp[mask] = numeric_limits<fp>::max();
         int bit = __builtin_ctz(mask);
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];
@@ -250,7 +250,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             vector<int> order; //order.reserve(cc_edges.size());
             order.resize(cc_edges.size());
             iota(order.begin(), order.end(), 0);
-            fp min_score = DBL_MAX;
+            fp min_score = numeric_limits<fp>::max();
             mt19937_64 rng{random_device{}()};
             while (get_time_seconds() < 4.9) {
                 fp score = calculate_score(order, g);
@@ -283,7 +283,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             //     // }
 // 
             //     vector<int> order; order.reserve(cc_edges.size());
-            //     fp min_score = DBL_MAX;
+            //     fp min_score = numeric_limits<fp>::max();
             //     for (int i = 0; i < 100; ++i) {
             //         order.clear();
             //         shuffle(block_optimal_order.begin(), block_optimal_order.end(), rng);
@@ -313,7 +313,7 @@ vector<int> solve_random_shuffle(const graph &g) {
     vector<int> p(g.m), p_min;
     iota(p.begin(), p.end(), 0);
     p_min = p;
-    fp min_score = DBL_MAX;
+    fp min_score = numeric_limits<fp>::max();
     mt19937_64 rng{random_device{}()};
 
     while (get_time_seconds() < 4.93) {
@@ -360,7 +360,7 @@ vector<int> solve_genetic(const graph &g) {
     pop.reserve(max_pop_size);
 
     vector<int> p_ans(g.m);
-    fp min_score = DBL_MAX;
+    fp min_score = numeric_limits<fp>::max();
     auto selection = [&]() {
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
@@ -397,6 +397,8 @@ vector<int> solve_genetic(const graph &g) {
                 p[i] = map_yx[p[i]];
             }
         }
+
+        // assert(is_permutation(p.begin(), p.end(), id.begin()));
 
         return p;
     };
@@ -524,8 +526,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 #ifdef FILE_INPUT
-    // freopen("../test_samples/3.txt", "r", stdin);
-    freopen("../input.txt", "r", stdin);
+    freopen("../test_samples/3.txt", "r", stdin);
+    // freopen("../input.txt", "r", stdin);
 #endif
     run_tests();
 }

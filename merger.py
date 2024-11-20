@@ -35,6 +35,8 @@ def merge_files(list_of_files_to_merge, output_path):
                     content_to_merge.append(line)
 
     with open(output_path, 'w') as output_file_obj:
+        output_file_obj.write("#define INPUT\n")
+	output_file_obj.write("#define MINGW\n")
         for include in sorted(includes):
             output_file_obj.write(include + '\n')
 

@@ -1,15 +1,9 @@
-#include <algorithm>
-#include <chrono>
-#include <numeric>
-#include <random>
-#include <chrono>
-#include <cfloat>
-#include <cassert>
-#include <iostream>
+#include "includes.h"
+
 #include "solver.h"
 #include "checker.h"
-#include "util.h"
-using namespace std;
+#include "tester.h"
+#include "block_dp.h"
 
 vector<int> solve_edge_blocking_dp(const graph &g) {
     auto start = chrono::high_resolution_clock::now();
@@ -71,7 +65,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             //     //         cc_optimal_order.push_back(ei);
             //     //     }
             //     // }
-// 
+            // 
             //     vector<int> order; order.reserve(cc_edges.size());
             //     fp min_score = DBL_MAX;
             //     for (int i = 0; i < 100; ++i) {
@@ -132,7 +126,6 @@ vector<int> solve_dp(const graph &g) {
 }
 
 // genetic algorithm
-
 
 vector<int> solve_genetic(const graph &g) {
     auto start = chrono::high_resolution_clock::now();
@@ -220,4 +213,38 @@ vector<int> solve_genetic(const graph &g) {
     }
 
     return p_ans;
+}
+
+void solve() {
+    int n; cin >> n;
+    graph g(n);
+    cin >> g.m >> g.M >> g.F;
+    for (int i = 0; i < n; ++i) cin >> g.c[i];
+
+    for (int i = 0; i < g.m; ++i) {
+        int u, v;
+        fp s;
+        cin >> u >> v >> s;
+        g.add_edge(u - 1, v - 1, s);
+    }
+
+    vector<int> p;
+
+#ifndef MINGW:
+    p = solve_genetic(g);
+#endif
+#ifdef MINGW
+    if (g.m <= 21) {
+        p = solve_dp(g);
+    }
+    else {
+        // p = solve_random_shuffle(g);
+        p = solve_genetic(g);
+    }
+#endif
+
+    for (int i = 0; i < p.size(); ++i) {
+        cout << p[i] + 1 << " ";
+    }
+    cout << '\n';
 }

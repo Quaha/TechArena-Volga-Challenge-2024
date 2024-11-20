@@ -19,8 +19,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 file(GLOB SOURCES "src/*.cpp")
-add_executable(techarena ${SOURCES})
+
+file(GLOB HEADERS "include/*.h")
+
+set(ALL_FILES ${SOURCES} ${HEADERS})
+
+add_executable(techarena ${ALL_FILES})
+
 target_include_directories(techarena PRIVATE include)
-#target_link_libraries(techarena lib)
 
 message(STATUS "C++ flags: ${CMAKE_CXX_FLAGS}")

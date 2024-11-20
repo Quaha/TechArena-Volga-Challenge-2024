@@ -1,14 +1,10 @@
 #pragma once
-#include <algorithm>
-#include <vector>
-#include <cstddef>
-using std::vector;
-
-using fp = long double;
+#include "includes.h"
 
 struct edge {
     int u,v;
     fp w;
+    edge(int u, int v, fp w) : u(u), v(v), w(w) {};
 };
 
 struct graph {

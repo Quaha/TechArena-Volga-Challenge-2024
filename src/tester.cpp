@@ -85,40 +85,13 @@ void run_tests() {
 #endif
 
     graph g = read_input(cin);
-    // auto p1 = solve_random_shuffle(g);
-    // auto beg = chrono::high_resolution_clock::now();
-    // auto p1 = solve_edge_blocking_dp(g);
-    auto p1 = solve_greedy_edgesort(g);
-    // auto end = chrono::high_resolution_clock::now();
-    // cout << "Time: " << (end - beg).count()/1000000 << '\n';
-    print_vector(p1, 0, g.m); cout << '\n';
-    // auto p2 = solve_edge_blocking_dp(g);
-    // {
-    //     vector<int> reference(p1.size());
-    //     iota(reference.begin(), reference.end(), 0);
-    //     auto p1c = p1;
-    //     auto p2c = p2;
-    //     sort(p1c.begin(), p1c.end());
-    //     sort(p2c.begin(), p2c.end());
-    //     // assert(p1c == reference);
-    //     cout << p1.size() << '\n' << p2.size() << '\n';
-    //     // assert(p2c == reference);
-    // }
 
-    // int64_t iterations_passed = 0;
-    // while (get_time_seconds() < 4.9) {
-    //     shuffle(p.begin(), p.end(), rng);
-    //     fp score = calculate_score(p, g);
-    //     if (score < min_score) {
-    //         p_min = p;
-    //         min_score = score;
-    //     }
-    //     // ++iterations_passed;
-    // }
-    // cerr << "Iterations passed: " << iterations_passed << '\n';
-
-    // print_vector(p_min, 0, g.m); cout << '\n';
-
-    // cout << "Best score: " << max_score << '\n';
-    // cout << "Permutation: "; print_vector(p_max, 0, m); cout << '\n';
+    vector<int> p;
+    if (g.m <= 21) {
+        p = solve_dp(g);
+    } else {
+        // p = solve_random_shuffle(g);
+        p = solve_genetic(g);
+    }
+    print_vector(p, 0, g.m); cout << '\n';
 }

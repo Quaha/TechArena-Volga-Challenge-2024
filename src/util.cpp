@@ -16,10 +16,10 @@ fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
 }
 
 #ifndef RUN_TESTS
-DSU mask_dsu[1 << 16];
-vector<fp> mask_c[1 << 16];
-fp dp[1 << 16];
-int dp_arg[1 << 16];
+DSU mask_dsu[1 << 21];
+vector<fp> mask_c[1 << 21];
+fp dp[1 << 21];
+int dp_arg[1 << 21];
 #endif
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {

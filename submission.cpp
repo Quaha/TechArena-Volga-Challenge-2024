@@ -41,6 +41,8 @@ struct DSU {
     int get(int x);
     void merge(int x, int y);
 };
+
+vector<vector<int>> get_connected_components(const graph &g);
 using namespace std;
 
 graph::graph() {}
@@ -71,6 +73,30 @@ void DSU::merge(int x, int y) {
     sz[y] += sz[x];
     root[x] = y;
 }
+
+vector<vector<int>> get_connected_components(const graph &g) {
+    vector<vector<int>> comp;
+    vector<char> was(g.n);
+    int comp_num = 0;
+    function<void(int)> dfs = [&](int u) {
+        was[u] = 1;
+        comp.back().push_back(u);
+        for (int ei : g.adj[u]) {
+            auto &[x, y, w] = g.edges[ei];
+            int v = x ^ y ^ u;
+            if (was[v]) continue;
+            dfs(v);
+        }
+    };
+    for (int i = 0; i < g.n; ++i) {
+        if (!was[i]) {
+            comp.emplace_back();
+            dfs(i);
+            ++comp_num;
+        }
+    }
+    return comp;
+}
 using namespace std;
 
 fp penalty(fp c, fp M, fp F) {
@@ -87,10 +113,10 @@ fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
 }
 
 #ifndef RUN_TESTS
-DSU mask_dsu[1 << 16];
-vector<fp> mask_c[1 << 16];
-fp dp[1 << 16];
-int dp_arg[1 << 16];
+DSU mask_dsu[1 << 21];
+vector<fp> mask_c[1 << 21];
+fp dp[1 << 21];
+int dp_arg[1 << 21];
 #endif
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {
@@ -202,26 +228,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
         return (current - start).count() / 1000000000.0;
     };
 
-    vector<vector<int>> comp;
-    vector<char> was(g.n);
-    int comp_num = 0;
-    function<void(int)> dfs = [&](int u) {
-        was[u] = 1;
-        comp.back().push_back(u);
-        for (int ei : g.adj[u]) {
-            auto &[x, y, w] = g.edges[ei];
-            int v = x ^ y ^ u;
-            if (was[v]) continue;
-            dfs(v);
-        }
-    };
-    for (int i = 0; i < g.n; ++i) {
-        if (!was[i]) {
-            comp.emplace_back();
-            dfs(i);
-            ++comp_num;
-        }
-    }
+    auto comp = get_connected_components(g);
 
     vector<int> ans;
     size_t block_size = 15;
@@ -243,10 +250,10 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             vector<int> order; //order.reserve(cc_edges.size());
             order.resize(cc_edges.size());
             iota(order.begin(), order.end(), 0);
-            double min_score = DBL_MAX;
+            fp min_score = DBL_MAX;
             mt19937_64 rng{random_device{}()};
             while (get_time_seconds() < 4.9) {
-                double score = calculate_score(order, g);
+                fp score = calculate_score(order, g);
                 if (score < min_score) {
                     cc_optimal_order = order;
                     min_score = score;
@@ -276,12 +283,12 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             //     // }
 // 
             //     vector<int> order; order.reserve(cc_edges.size());
-            //     double min_score = DBL_MAX;
+            //     fp min_score = DBL_MAX;
             //     for (int i = 0; i < 100; ++i) {
             //         order.clear();
             //         shuffle(block_optimal_order.begin(), block_optimal_order.end(), rng);
             //         for (const auto &block : block_optimal_order) for (int ei : block) order.push_back(ei);
-            //         double score = calculate_score(order, g);
+            //         fp score = calculate_score(order, g);
             //         if (score < min_score) {
             //             cc_optimal_order = order;
             //             min_score = score;
@@ -309,7 +316,7 @@ vector<int> solve_random_shuffle(const graph &g) {
     fp min_score = DBL_MAX;
     mt19937_64 rng{random_device{}()};
 
-    while (get_time_seconds() < 4.9) {
+    while (get_time_seconds() < 4.93) {
         shuffle(p.begin(), p.end(), rng);
         fp score = calculate_score(p, g);
         if (score < min_score) {
@@ -327,6 +334,104 @@ vector<int> solve_greedy_edgesort(const graph &g) {
     sort(ei.begin(), ei.end(), [&](int i, int j) {return g.edges[i].w < g.edges[j].w;});
     return ei;
 }
+
+vector<int> solve_dp(const graph &g) {
+    vector<int> edges(g.m);
+    iota(edges.begin(), edges.end(), 0);
+    return block_dp(g, edges);
+}
+
+// genetic algorithm
+
+
+vector<int> solve_genetic(const graph &g) {
+    auto start = chrono::high_resolution_clock::now();
+    auto get_time_seconds = [&]() {
+        auto current = chrono::high_resolution_clock::now();
+        return (current - start).count() / 1000000000.0;
+    };
+    
+    const int iterations = 1000;
+    const int max_pop_size = 500;
+    const int mutations_per_iter = 20;
+    const int selection_remain = 100;
+
+    vector<pair<fp, vector<int>>> pop;
+    pop.reserve(max_pop_size);
+
+    vector<int> p_ans(g.m);
+    fp min_score = DBL_MAX;
+    auto selection = [&]() {
+        sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
+            return a.first < b.first;
+        });
+        pop.resize(selection_remain);
+        if (pop[0].first < min_score) {
+            min_score = pop[0].first;
+            p_ans = pop[0].second;
+        }
+    };
+
+    mt19937_64 rng{random_device{}()};
+    vector<int> id(g.m); iota(id.begin(), id.end(), 0);
+    uniform_int_distribution<int> unif_pop(0, selection_remain - 1);
+    uniform_int_distribution<int> unif_pos(0, g.m - 1);
+    vector<int> map(g.m), map_yx(g.m);
+    auto crossover = [&](const auto &x, const auto &y, int l, int r) {
+        vector<int> p(g.m);
+
+        for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
+        for (int i = l; i <= r; ++i) {
+            p[i] = y[i];
+            map_yx[y[i]] = x[i];
+        }
+        for (int i = 0; i < l; ++i) {
+            p[i] = x[i];
+            while (map_yx[p[i]] != -1) {
+                p[i] = map_yx[p[i]];
+            }
+        }
+        for (int i = r + 1; i < g.m; ++i) {
+            p[i] = x[i];
+            while (map_yx[p[i]] != -1) {
+                p[i] = map_yx[p[i]];
+            }
+        }
+
+        return p;
+    };
+
+    vector<int> p(g.m);
+    iota(p.begin(), p.end(), 0);
+    for (int i = 0; i < max_pop_size; ++i) {
+        shuffle(p.begin(), p.end(), rng);
+        pop.emplace_back(calculate_score(p, g), p);
+    }
+    selection();
+    // cout << "Iteration 0, best score: " << pop[0].first << endl;
+
+    // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
+    while (get_time_seconds() < 4.85) {
+        for (int i = selection_remain; i < max_pop_size; ++i) {
+            int l = unif_pos(rng);
+            int r = unif_pos(rng);
+            if (l > r) swap(l, r);
+            auto p = crossover(pop[unif_pop(rng)].second, pop[unif_pop(rng)].second, l, r);
+            pop.emplace_back(calculate_score(p, g), p);
+        }
+        for (int mut_i = 0; mut_i < mutations_per_iter; ++mut_i) {
+            int pop_i = unif_pop(rng);
+            int pos1 = unif_pos(rng), pos2 = unif_pos(rng);
+            swap(pop[pop_i].second[pos1], pop[pop_i].second[pos2]);
+            pop[pop_i].first = calculate_score(pop[pop_i].second, g);
+        }
+        selection();
+        // cout << "Iteration " << ga_iter + 1 << ", best score: " << pop[0].first << endl;
+    }
+
+    return p_ans;
+}
+
 using namespace std;
 
 template <typename T>
@@ -403,42 +508,15 @@ void run_tests() {
 #endif
 
     graph g = read_input(cin);
-    // auto p1 = solve_random_shuffle(g);
-    // auto beg = chrono::high_resolution_clock::now();
-    // auto p1 = solve_edge_blocking_dp(g);
-    auto p1 = solve_greedy_edgesort(g);
-    // auto end = chrono::high_resolution_clock::now();
-    // cout << "Time: " << (end - beg).count()/1000000 << '\n';
-    print_vector(p1, 0, g.m); cout << '\n';
-    // auto p2 = solve_edge_blocking_dp(g);
-    // {
-    //     vector<int> reference(p1.size());
-    //     iota(reference.begin(), reference.end(), 0);
-    //     auto p1c = p1;
-    //     auto p2c = p2;
-    //     sort(p1c.begin(), p1c.end());
-    //     sort(p2c.begin(), p2c.end());
-    //     // assert(p1c == reference);
-    //     cout << p1.size() << '\n' << p2.size() << '\n';
-    //     // assert(p2c == reference);
-    // }
 
-    // int64_t iterations_passed = 0;
-    // while (get_time_seconds() < 4.9) {
-    //     shuffle(p.begin(), p.end(), rng);
-    //     fp score = calculate_score(p, g);
-    //     if (score < min_score) {
-    //         p_min = p;
-    //         min_score = score;
-    //     }
-    //     // ++iterations_passed;
-    // }
-    // cerr << "Iterations passed: " << iterations_passed << '\n';
-
-    // print_vector(p_min, 0, g.m); cout << '\n';
-
-    // cout << "Best score: " << max_score << '\n';
-    // cout << "Permutation: "; print_vector(p_max, 0, m); cout << '\n';
+    vector<int> p;
+    if (g.m <= 21) {
+        p = solve_dp(g);
+    } else {
+        // p = solve_random_shuffle(g);
+        p = solve_genetic(g);
+    }
+    print_vector(p, 0, g.m); cout << '\n';
 }
 using namespace std;
 

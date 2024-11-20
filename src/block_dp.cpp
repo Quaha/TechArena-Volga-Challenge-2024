@@ -1,19 +1,7 @@
-#include "util.h"
-#include <cfloat>
-using namespace std;
+#include "includes.h"
 
-fp penalty(fp c, fp M, fp F) {
-    if (c <= M) return 0.0;
-    return F * (c - M);
-}
-
-fp cost1(fp c, fp c_result, fp M, fp F) {
-    return c + c_result + penalty(c_result, M, F);
-}
-
-fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
-    return c1 + c2 + c_result + penalty(c_result, M, F);
-}
+#include "block_dp.h"
+#include "checker.h"
 
 #ifndef RUN_TESTS
 DSU mask_dsu[1 << 21];
@@ -30,10 +18,11 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     vector<int           > dp_arg(1 << 16);
 #endif
     int m = edges.size();
+#ifdef MINGW
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
     for (int mask = 1; mask < (1 << m); ++mask) {
-        dp[mask] = DBL_MAX;
+        dp[mask] = numeric_limits<fp>::max();
         int bit = __builtin_ctz(mask);
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];
@@ -80,6 +69,13 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
         ans.push_back(edges[dp_arg[mask]]);
     }
     reverse(ans.begin(), ans.end());
+#endif
+#ifndef MINGW
+    vector<int> ans;
+    for (int i = 1; i <= m; i++) {
+        ans.push_back(i);
+    }
+#endif
     return ans;
 }
 

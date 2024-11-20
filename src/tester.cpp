@@ -1,18 +1,10 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <numeric>
-#include <cmath>
-#include <cassert>
-#include <chrono>
-#include <iomanip>
+#include "includes.h"
+
 #include "tester.h"
 #include "checker.h"
 #include "solver.h"
-using namespace std;
 
-template <typename T>
-void print_vector(const vector<T> &v, int b, int e) {
+template <typename T> void print_vector(const vector<T> &v, int b, int e) {
     for (int i = b; i < e; ++i) {
         cout << v[i]+1 << ' ';
     }
@@ -83,15 +75,4 @@ void run_tests() {
     cout << setw(20) << "Random shuffle" << setw(15) << total_score[0] << setw(12) << best_score[0] << endl;
     cout << setw(20) << "Edge-block DP" << setw(15) << total_score[1] << setw(12) << best_score[1] << endl;
 #endif
-
-    graph g = read_input(cin);
-
-    vector<int> p;
-    if (g.m <= 21) {
-        p = solve_dp(g);
-    } else {
-        // p = solve_random_shuffle(g);
-        p = solve_genetic(g);
-    }
-    print_vector(p, 0, g.m); cout << '\n';
 }

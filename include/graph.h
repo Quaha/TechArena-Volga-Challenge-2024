@@ -30,3 +30,5 @@ struct DSU {
     int get(int x);
     void merge(int x, int y);
 };
+
+vector<vector<int>> get_connected_components(const graph &g);

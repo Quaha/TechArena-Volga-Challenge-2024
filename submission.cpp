@@ -121,10 +121,10 @@ int dp_arg[1 << 21];
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {
 #ifdef RUN_TESTS
-    vector<DSU           > mask_dsu(1 << 16);
-    vector<vector<fp>> mask_c(1 << 16);
-    vector<fp        > dp(1 << 16);
-    vector<int           > dp_arg(1 << 16);
+    vector<DSU           > mask_dsu(1 << 21);
+    vector<vector<fp>> mask_c(1 << 21);
+    vector<fp        > dp(1 << 21);
+    vector<int           > dp_arg(1 << 21);
 #endif
     int m = edges.size();
     mask_dsu[0].init(g.n);
@@ -220,89 +220,6 @@ fp calculate_score(const vector<int> &p, const graph &g) {
     return A.s;
 }
 using namespace std;
-
-vector<int> solve_edge_blocking_dp(const graph &g) {
-    auto start = chrono::high_resolution_clock::now();
-    auto get_time_seconds = [&]() {
-        auto current = chrono::high_resolution_clock::now();
-        return (current - start).count() / 1000000000.0;
-    };
-
-    auto comp = get_connected_components(g);
-
-    vector<int> ans;
-    size_t block_size = 15;
-
-    for (const auto &cc : comp) {
-        vector<int> cc_edges;
-        for (int u : cc) {
-            for (int ei : g.adj[u]) {
-                cc_edges.push_back(ei);
-            }
-        }
-        sort(cc_edges.begin(), cc_edges.end());
-        cc_edges.resize(unique(cc_edges.begin(), cc_edges.end()) - cc_edges.begin());
-
-        vector<int> cc_optimal_order;
-        if (cc_edges.size() <= block_size) {
-            cc_optimal_order = block_dp(g, cc_edges);
-        } else {
-            vector<int> order; //order.reserve(cc_edges.size());
-            order.resize(cc_edges.size());
-            iota(order.begin(), order.end(), 0);
-            fp min_score = numeric_limits<fp>::max();
-            mt19937_64 rng{random_device{}()};
-            while (get_time_seconds() < 4.9) {
-                fp score = calculate_score(order, g);
-                if (score < min_score) {
-                    cc_optimal_order = order;
-                    min_score = score;
-                }
-                shuffle(order.begin(), order.end(), rng);
-            }
-            cc_optimal_order = order;
-        }
-            // while (get_time_seconds() < 4.2) {
-            //     mt19937_64 rng{random_device{}()};
-            //     shuffle(cc_edges.begin(), cc_edges.end(), rng);
-            //     size_t num_of_blocks = (cc_edges.size() + block_size - 1) / block_size;
-            //     vector<vector<int>> block_optimal_order(num_of_blocks);
-            //     for (size_t bi = 0; bi < num_of_blocks; ++bi) {
-            //         size_t block_left = block_size * bi;
-            //         size_t block_right = min(block_size * (bi+1), cc_edges.size());
-            //         vector<int> block_ei(cc_edges.begin() + block_left,
-            //                             cc_edges.begin() + block_right);
-            //         cc_optimal_order = block_dp(g, block_ei);
-            //         block_optimal_order[bi] = cc_optimal_order;
-            //     }
-            //     // cc_optimal_order.clear();
-            //     // for (const auto &block_order : block_optimal_order) {
-            //     //     for (int ei : block_order) {
-            //     //         cc_optimal_order.push_back(ei);
-            //     //     }
-            //     // }
-// 
-            //     vector<int> order; order.reserve(cc_edges.size());
-            //     fp min_score = numeric_limits<fp>::max();
-            //     for (int i = 0; i < 100; ++i) {
-            //         order.clear();
-            //         shuffle(block_optimal_order.begin(), block_optimal_order.end(), rng);
-            //         for (const auto &block : block_optimal_order) for (int ei : block) order.push_back(ei);
-            //         fp score = calculate_score(order, g);
-            //         if (score < min_score) {
-            //             cc_optimal_order = order;
-            //             min_score = score;
-            //         }
-            //     }
-            // }
-
-            // cc_optimal_order = cluster_dp(g, block_optimal_order);
-        for (int ei : cc_optimal_order) ans.push_back(ei);
-        // for (int ei : cc_optimal_order) ans.push_back(ei);
-    }
-
-    return ans;
-}
 
 vector<int> solve_random_shuffle(const graph &g) {
     auto start = chrono::high_resolution_clock::now();
@@ -412,6 +329,7 @@ vector<int> solve_genetic(const graph &g) {
     selection();
     // cout << "Iteration 0, best score: " << pop[0].first << endl;
 
+    // int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
     while (get_time_seconds() < 4.85) {
         for (int i = selection_remain; i < max_pop_size; ++i) {
@@ -428,9 +346,10 @@ vector<int> solve_genetic(const graph &g) {
             pop[pop_i].first = calculate_score(pop[pop_i].second, g);
         }
         selection();
+        // ++iter_count;
         // cout << "Iteration " << ga_iter + 1 << ", best score: " << pop[0].first << endl;
     }
-
+    // cout << iter_count << '\n';
     return p_ans;
 }
 

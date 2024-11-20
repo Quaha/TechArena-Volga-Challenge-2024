@@ -14,19 +14,21 @@ fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
     return c1 + c2 + c_result + penalty(c_result, M, F);
 }
 
+const int MAX_M = 21;
+
 #ifndef RUN_TESTS
-DSU mask_dsu[1 << 21];
-vector<fp> mask_c[1 << 21];
-fp dp[1 << 21];
-int dp_arg[1 << 21];
+DSU mask_dsu[1 << MAX_M];
+vector<fp> mask_c[1 << MAX_M];
+fp dp[1 << MAX_M];
+int dp_arg[1 << MAX_M];
 #endif
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {
 #ifdef RUN_TESTS
-    vector<DSU           > mask_dsu(1 << 16);
-    vector<vector<fp>> mask_c(1 << 16);
-    vector<fp        > dp(1 << 16);
-    vector<int           > dp_arg(1 << 16);
+    vector<DSU           > mask_dsu(1 << MAX_M);
+    vector<vector<fp>> mask_c(1 << MAX_M);
+    vector<fp        > dp(1 << MAX_M);
+    vector<int           > dp_arg(1 << MAX_M);
 #endif
     int m = edges.size();
     mask_dsu[0].init(g.n);

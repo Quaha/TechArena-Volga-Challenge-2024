@@ -1,5 +1,4 @@
 #include "util.h"
-#include <cfloat>
 using namespace std;
 
 fp penalty(fp c, fp M, fp F) {
@@ -33,7 +32,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
     for (int mask = 1; mask < (1 << m); ++mask) {
-        dp[mask] = DBL_MAX;
+        dp[mask] = numeric_limits<fp>::max();
         int bit = __builtin_ctz(mask);
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];

@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <vector>
+#include <limits>
 #include <cstddef>
 using std::vector;
 

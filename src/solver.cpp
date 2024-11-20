@@ -3,7 +3,6 @@
 #include <numeric>
 #include <random>
 #include <chrono>
-#include <cfloat>
 #include <cassert>
 #include <iostream>
 #include "solver.h"
@@ -40,7 +39,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             vector<int> order; //order.reserve(cc_edges.size());
             order.resize(cc_edges.size());
             iota(order.begin(), order.end(), 0);
-            fp min_score = DBL_MAX;
+            fp min_score = numeric_limits<fp>::max();
             mt19937_64 rng{random_device{}()};
             while (get_time_seconds() < 4.9) {
                 fp score = calculate_score(order, g);
@@ -73,7 +72,7 @@ vector<int> solve_edge_blocking_dp(const graph &g) {
             //     // }
 // 
             //     vector<int> order; order.reserve(cc_edges.size());
-            //     fp min_score = DBL_MAX;
+            //     fp min_score = numeric_limits<fp>::max();
             //     for (int i = 0; i < 100; ++i) {
             //         order.clear();
             //         shuffle(block_optimal_order.begin(), block_optimal_order.end(), rng);
@@ -103,7 +102,7 @@ vector<int> solve_random_shuffle(const graph &g) {
     vector<int> p(g.m), p_min;
     iota(p.begin(), p.end(), 0);
     p_min = p;
-    fp min_score = DBL_MAX;
+    fp min_score = numeric_limits<fp>::max();
     mt19937_64 rng{random_device{}()};
 
     while (get_time_seconds() < 4.93) {
@@ -150,7 +149,7 @@ vector<int> solve_genetic(const graph &g) {
     pop.reserve(max_pop_size);
 
     vector<int> p_ans(g.m);
-    fp min_score = DBL_MAX;
+    fp min_score = numeric_limits<fp>::max();
     auto selection = [&]() {
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
@@ -188,6 +187,8 @@ vector<int> solve_genetic(const graph &g) {
             }
         }
 
+        // assert(is_permutation(p.begin(), p.end(), id.begin()));
+
         return p;
     };
 
@@ -200,6 +201,7 @@ vector<int> solve_genetic(const graph &g) {
     selection();
     // cout << "Iteration 0, best score: " << pop[0].first << endl;
 
+    // int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
     while (get_time_seconds() < 4.85) {
         for (int i = selection_remain; i < max_pop_size; ++i) {
@@ -216,8 +218,9 @@ vector<int> solve_genetic(const graph &g) {
             pop[pop_i].first = calculate_score(pop[pop_i].second, g);
         }
         selection();
+        // ++iter_count;
         // cout << "Iteration " << ga_iter + 1 << ", best score: " << pop[0].first << endl;
     }
-
+    // cout << iter_count << '\n';
     return p_ans;
 }

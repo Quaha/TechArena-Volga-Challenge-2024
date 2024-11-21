@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 using std::vector;
+using std::istream;
 
 using fp = long double;
 
@@ -33,6 +34,8 @@ struct graph {
     void add_edge(int u, int v, fp w);
 };
 
+graph read_input(istream &ist);
+
 struct DSU {
     vector<int> root, sz;
     DSU();
@@ -51,6 +54,22 @@ void graph::add_edge(int u, int v, fp w) {
     adj[u].push_back(edges.size());
     adj[v].push_back(edges.size());
     edges.emplace_back(u, v, w);
+}
+
+graph read_input(istream &ist) {
+    int n; ist >> n;
+    graph g(n);
+    ist >> g.m >> g.M >> g.F;
+    for (int i = 0; i < n; ++i) ist >> g.c[i];
+
+    for (int i = 0; i < g.m; ++i) {
+        int u,v;
+        fp s;
+        ist >> u >> v >> s;
+        --u, --v;
+        g.add_edge(u, v, s);
+    }
+    return g;
 }
 
 DSU::DSU() {}
@@ -204,15 +223,15 @@ struct KahanSum {
     }
 };
 
-DSU score_dsu(200);
-fp score_c[200];
+// DSU score_dsu(200);
+// fp score_c[200];
 
 fp calculate_score(const vector<int> &p, const graph &g) {
     KahanSum A;
-    // DSU dsu(g.n);
+    DSU score_dsu(g.n);
     score_dsu.init(g.n);
-    for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
-    // score_c = g.c;
+    vector<fp> score_c = g.c;
+    // for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
 
     for (int ei : p) {
         auto [u, v, w] = g.edges[ei];
@@ -275,20 +294,26 @@ vector<int> solve_dp(const graph &g) {
 
 // genetic algorithm
 
-
-vector<int> solve_genetic(const graph &g) {
+#ifdef PARAM_SEARCH
+vector<int> solve_genetic(const graph &g,
+                          int max_pop_size,
+                          int mutations_per_iter,
+                          int selection_remain) {
+#else
+vector<int> solve_genetic(const graph &g,
+                          int max_pop_size = 768,
+                          int mutations_per_iter = 96,
+                          int selection_remain = 128) {
+#endif
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
         return (current - start).count() / 1000000000.0;
     };
-    
-    constexpr int max_pop_size = 1000;
-    constexpr int mutations_per_iter = 20;
-    constexpr int selection_remain = 100;
 
+    int greedy_init = 10240;
     vector<pair<fp, vector<int>>> pop;
-    pop.reserve(max_pop_size);
+    pop.reserve(max(greedy_init, max_pop_size));
 
     vector<int> p_ans(g.m);
     fp min_score = numeric_limits<fp>::max();
@@ -334,9 +359,10 @@ vector<int> solve_genetic(const graph &g) {
         return p;
     };
 
+
     vector<int> p(g.m);
     iota(p.begin(), p.end(), 0);
-    for (int i = 0; i < max_pop_size; ++i) {
+    for (int i = 0; i < greedy_init; ++i) {
         shuffle(p.begin(), p.end(), rng);
         pop.emplace_back(calculate_score(p, g), p);
     }
@@ -345,7 +371,8 @@ vector<int> solve_genetic(const graph &g) {
 
     int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
-    while (get_time_seconds() < 4.88) {
+    while (get_time_seconds() < 4.85) {
+        mt19937_64 rng{random_device{}()};
         for (int i = selection_remain; i < max_pop_size; ++i) {
             int l = unif_pos(rng);
             int r = unif_pos(rng);
@@ -378,22 +405,6 @@ void print_vector(const vector<T> &v, int b, int e) {
 
 void minus_one(vector<int> &p) {
     for (int &x : p) --x;
-}
-
-graph read_input(istream &ist) {
-    int n; ist >> n;
-    graph g(n);
-    ist >> g.m >> g.M >> g.F;
-    for (int i = 0; i < n; ++i) ist >> g.c[i];
-
-    for (int i = 0; i < g.m; ++i) {
-        int u,v;
-        fp s;
-        ist >> u >> v >> s;
-        --u, --v;
-        g.add_edge(u, v, s);
-    }
-    return g;
 }
 
 void run_tests() {
@@ -462,7 +473,12 @@ int main(int argc, char *argv[]) {
     freopen("../test_samples/3.txt", "r", stdin);
     // freopen("../input.txt", "r", stdin);
 #endif
+#ifdef PARAM_SEARCH
+    param_search();
+#endif
+#ifndef PARAM_SEARCH
     run_tests();
+#endif
 }
 
 

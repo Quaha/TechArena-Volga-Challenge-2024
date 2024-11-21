@@ -49,11 +49,19 @@ vector<int> solve_dp(const graph &g) {
 
 // genetic algorithm
 
-
+#ifdef PARAM_SEARCH
 vector<int> solve_genetic(const graph &g,
                           int max_pop_size,
                           int mutations_per_iter,
-                          int selection_remain) {
+                          int selection_remain,
+                          int random_init_size) {
+#else
+vector<int> solve_genetic(const graph &g,
+                          int max_pop_size = 768,
+                          int mutations_per_iter = 96,
+                          int selection_remain = 128,
+                          int random_init_size = 10240) {
+#endif
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
@@ -61,7 +69,7 @@ vector<int> solve_genetic(const graph &g,
     };
 
     vector<pair<fp, vector<int>>> pop;
-    pop.reserve(max_pop_size);
+    pop.reserve(max(random_init_size, max_pop_size));
 
     vector<int> p_ans(g.m);
     fp min_score = numeric_limits<fp>::max();
@@ -107,9 +115,10 @@ vector<int> solve_genetic(const graph &g,
         return p;
     };
 
+
     vector<int> p(g.m);
     iota(p.begin(), p.end(), 0);
-    for (int i = 0; i < max_pop_size; ++i) {
+    for (int i = 0; i < random_init_size; ++i) {
         shuffle(p.begin(), p.end(), rng);
         pop.emplace_back(calculate_score(p, g), p);
     }
@@ -118,7 +127,8 @@ vector<int> solve_genetic(const graph &g,
 
     int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
-    while (get_time_seconds() < 4.88) {
+    while (get_time_seconds() < 4.85) {
+        mt19937_64 rng{random_device{}()};
         for (int i = selection_remain; i < max_pop_size; ++i) {
             int l = unif_pos(rng);
             int r = unif_pos(rng);

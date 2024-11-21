@@ -1,6 +1,7 @@
 #pragma once
 #include "graph.h"
 
+void solve();
 vector<int> solve_random_shuffle(const graph &g);
 vector<int> solve_greedy_edgesort(const graph &g);
 vector<int> solve_genetic(const graph &g,

@@ -1,21 +1,23 @@
-#include "checker.h"
+
+#include "solver.h"
 #include "tester.h"
 #include "param_search.h"
-#include <cstdio>
 using namespace std;
 
-// #define FILE_INPUT
-
 int main(int argc, char *argv[]) {
-#ifdef FILE_INPUT
-    freopen("../test_samples/3.txt", "r", stdin);
-    // freopen("../input.txt", "r", stdin);
+#ifndef PARAM_SEARCH
+#ifdef INPUT
+    //freopen("../input.txt", "r", stdin);
+    solve();
 #endif
+#ifndef INPUT
+    run_tests();
+#endif
+#endif
+
 #ifdef PARAM_SEARCH
     param_search();
 #endif
-#ifndef PARAM_SEARCH
-    run_tests();
-#endif
+    return 0;
 }
 

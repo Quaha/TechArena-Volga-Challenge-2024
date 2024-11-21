@@ -1,17 +1,11 @@
 #pragma once
-#include <algorithm>
-#include <fstream>
-#include <limits>
-#include <cstddef>
-#include <vector>
-using std::vector;
-using std::istream;
 
-using fp = long double;
+#include "includes.h"
 
 struct edge {
     int u,v;
     fp w;
+    edge(int u, int v, fp w) : u(u), v(v), w(w) {};
 };
 
 struct graph {

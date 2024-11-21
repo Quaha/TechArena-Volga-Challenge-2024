@@ -1,8 +1,6 @@
-#include <functional>
-#include <numeric>
-#include <utility>
+#include "includes.h"
+
 #include "graph.h"
-using namespace std;
 
 graph::graph() {}
 graph::graph(int n) : n(n), adj(n), c(n) {}

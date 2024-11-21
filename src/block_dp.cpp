@@ -1,6 +1,8 @@
-#include "util.h"
-using namespace std;
+#include "includes.h"
 
+#include "block_dp.h"
+#include "checker.h"
+using namespace std;
 const int MAX_M = 21;
 
 #ifndef RUN_TESTS
@@ -18,6 +20,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     vector<int           > dp_arg(1 << MAX_M);
 #endif
     int m = edges.size();
+#ifdef MINGW
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
     for (int mask = 1; mask < (1 << m); ++mask) {
@@ -68,6 +71,13 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
         ans.push_back(edges[dp_arg[mask]]);
     }
     reverse(ans.begin(), ans.end());
+#endif
+#ifndef MINGW
+    vector<int> ans;
+    for (int i = 1; i <= m; i++) {
+        ans.push_back(i);
+    }
+#endif
     return ans;
 }
 

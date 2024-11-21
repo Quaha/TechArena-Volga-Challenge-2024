@@ -1,26 +1,34 @@
+#define INPUT
+#define MINGW
 #include <algorithm>
 #include <cassert>
+#include <cfloat>
 #include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <cstdio>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <numeric>
 #include <random>
 #include <utility>
 #include <vector>
+
+using namespace std;
+using fp = long double;
 using std::vector;
 using std::istream;
 
-using fp = long double;
+//#define MINGW
+#define INPUT
+
+
 
 struct edge {
     int u,v;
     fp w;
+    edge(int u, int v, fp w) : u(u), v(v), w(w) {};
 };
 
 struct graph {
@@ -46,7 +54,7 @@ struct DSU {
 };
 
 vector<vector<int>> get_connected_components(const graph &g);
-using namespace std;
+
 
 graph::graph() {}
 graph::graph(int n) : n(n), adj(n), c(n) {}
@@ -117,27 +125,64 @@ vector<vector<int>> get_connected_components(const graph &g) {
     return comp;
 }
 
-// inline fp penalty(fp c, fp M, fp F);
-// inline fp cost1(fp c, fp c_result, fp M, fp F);
-// inline fp cost2(fp c1, fp c2, fp c_result, fp M, fp F);
 
-inline fp penalty(fp c, fp M, fp F) {
+fp penalty(fp c, fp M, fp F) {
     if (c <= M) return 0.0;
     return F * (c - M);
 }
 
-inline fp cost1(fp c, fp c_result, fp M, fp F) {
+fp cost1(fp c, fp c_result, fp M, fp F) {
     return c + c_result + penalty(c_result, M, F);
 }
 
-inline fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
+fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
     return c1 + c2 + c_result + penalty(c_result, M, F);
 }
 
-vector<int> block_dp(const graph &g, const vector<int> &edges);
+struct KahanSum {
+    fp s = 0.0;
+    fp e = 0.0;
+    void add(fp x) {
+        s += x;
+        fp d = x - e;
+        fp t = s + d;
+        e = (t - s) - d;
+        s = t;
+    }
+};
+
+// DSU score_dsu(200);
+// fp score_c[200];
+
+fp calculate_score(const vector<int> &p, const graph &g) {
+    KahanSum A;
+    DSU score_dsu(g.n);
+    score_dsu.init(g.n);
+    vector<fp> score_c = g.c;
+    // for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
+
+    for (int ei : p) {
+        auto [u, v, w] = g.edges[ei];
+        u = score_dsu.get(u);
+        v = score_dsu.get(v);
+        if (u == v) {
+            fp c_result = w * score_c[u];
+            A.add(cost1(score_c[u], c_result, g.M, g.F));
+            score_c[u] = c_result;
+        } else {
+            fp c1 = score_c[u];
+            fp c2 = score_c[v];
+            fp c_result = w * c1 * c2;
+            A.add(cost2(score_c[u], score_c[v], c_result, g.M, g.F));
+            score_dsu.merge(u,v);
+            score_c[score_dsu.get(u)] = c_result;
+        }
+    }
+
+    return A.s;
+}
 
 using namespace std;
-
 const int MAX_M = 21;
 
 #ifndef RUN_TESTS
@@ -155,6 +200,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     vector<int           > dp_arg(1 << MAX_M);
 #endif
     int m = edges.size();
+#ifdef MINGW
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
     for (int mask = 1; mask < (1 << m); ++mask) {
@@ -205,55 +251,17 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
         ans.push_back(edges[dp_arg[mask]]);
     }
     reverse(ans.begin(), ans.end());
+#endif
+#ifndef MINGW
+    vector<int> ans;
+    for (int i = 1; i <= m; i++) {
+        ans.push_back(i);
+    }
+#endif
     return ans;
 }
 
 
-using namespace std;
-
-struct KahanSum {
-    fp s = 0.0;
-    fp e = 0.0;
-    void add(fp x) {
-        s += x;
-        fp d = x - e;
-        fp t = s + d;
-        e = (t - s) - d;
-        s = t;
-    }
-};
-
-// DSU score_dsu(200);
-// fp score_c[200];
-
-fp calculate_score(const vector<int> &p, const graph &g) {
-    KahanSum A;
-    DSU score_dsu(g.n);
-    score_dsu.init(g.n);
-    vector<fp> score_c = g.c;
-    // for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
-
-    for (int ei : p) {
-        auto [u, v, w] = g.edges[ei];
-        u = score_dsu.get(u);
-        v = score_dsu.get(v);
-        if (u == v) {
-            fp c_result = w * score_c[u];
-            A.add(cost1(score_c[u], c_result, g.M, g.F));
-            score_c[u] = c_result;
-        } else {
-            fp c1 = score_c[u];
-            fp c2 = score_c[v];
-            fp c_result = w * c1 * c2;
-            A.add(cost2(score_c[u], score_c[v], c_result, g.M, g.F));
-            score_dsu.merge(u,v);
-            score_c[score_dsu.get(u)] = c_result;
-        }
-    }
-
-    return A.s;
-}
-using namespace std;
 
 vector<int> solve_random_shuffle(const graph &g) {
     auto start = chrono::high_resolution_clock::now();
@@ -298,12 +306,14 @@ vector<int> solve_dp(const graph &g) {
 vector<int> solve_genetic(const graph &g,
                           int max_pop_size,
                           int mutations_per_iter,
-                          int selection_remain) {
+                          int selection_remain,
+                          int random_init_size) {
 #else
 vector<int> solve_genetic(const graph &g,
                           int max_pop_size = 768,
                           int mutations_per_iter = 96,
-                          int selection_remain = 128) {
+                          int selection_remain = 128,
+                          int random_init_size = 10240) {
 #endif
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
@@ -311,9 +321,8 @@ vector<int> solve_genetic(const graph &g,
         return (current - start).count() / 1000000000.0;
     };
 
-    int greedy_init = 10240;
     vector<pair<fp, vector<int>>> pop;
-    pop.reserve(max(greedy_init, max_pop_size));
+    pop.reserve(max(random_init_size, max_pop_size));
 
     vector<int> p_ans(g.m);
     fp min_score = numeric_limits<fp>::max();
@@ -362,7 +371,7 @@ vector<int> solve_genetic(const graph &g,
 
     vector<int> p(g.m);
     iota(p.begin(), p.end(), 0);
-    for (int i = 0; i < greedy_init; ++i) {
+    for (int i = 0; i < random_init_size; ++i) {
         shuffle(p.begin(), p.end(), rng);
         pop.emplace_back(calculate_score(p, g), p);
     }
@@ -377,7 +386,7 @@ vector<int> solve_genetic(const graph &g,
             int l = unif_pos(rng);
             int r = unif_pos(rng);
             if (l > r) swap(l, r);
-            auto p = crossover(pop[unif_pop(rng)].second, pop[unif_pop(rng)].second, l, r);
+            vector<int> p = crossover(pop[unif_pop(rng)].second, pop[unif_pop(rng)].second, l, r);
             pop.emplace_back(calculate_score(p, g), p);
         }
         for (int mut_i = 0; mut_i < mutations_per_iter; ++mut_i) {
@@ -394,91 +403,58 @@ vector<int> solve_genetic(const graph &g,
     return p_ans;
 }
 
-using namespace std;
+void solve() {
+    int n; cin >> n;
+    graph g(n);
+    cin >> g.m >> g.M >> g.F;
+    for (int i = 0; i < n; ++i) cin >> g.c[i];
 
-template <typename T>
-void print_vector(const vector<T> &v, int b, int e) {
-    for (int i = b; i < e; ++i) {
-        cout << v[i]+1 << ' ';
+    for (int i = 0; i < g.m; ++i) {
+        int u, v;
+        fp s;
+        cin >> u >> v >> s;
+        g.add_edge(u - 1, v - 1, s);
     }
-}
-
-void minus_one(vector<int> &p) {
-    for (int &x : p) --x;
-}
-
-void run_tests() {
-    // int num_of_tests = 1;
-#ifdef RUN_TESTS
-    vector<graph> test_graph(200);
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        string path = "../test_samples/" + to_string(test_i + 1) + ".txt";
-        ifstream ifs(path);
-        test_graph[test_i] = read_input(ifs);
-        ifs.close();
-    }
-
-    vector<array<fp,2>> scores(200);
-#pragma omp parallel for
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        if ((test_i + 1) % 5 == 0) {
-            string out = "Running on test " + to_string(test_i + 1);
-            cout << out << endl;
-        }
-        auto &g = test_graph[test_i];
-        scores[test_i] = {
-            calculate_score(solve_random_shuffle(g), g),
-            calculate_score(solve_edge_blocking_dp(g), g)
-        };
-    }
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        cout << scores[test_i][0] << ' ' << scores[test_i][1] << '\n';
-    }
-    fp total_score[2]{};
-    int best_score[2]{};
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        fp c_log_sum = 0.0;
-        auto &g = test_graph[test_i];
-        for (int i = 0; i < g.n; ++i) {
-            c_log_sum += log(g.c[i]);
-        }
-        c_log_sum *= g.m;
-        for (int method_i = 0; method_i < 2; ++method_i) {
-            total_score[method_i] += c_log_sum / log(scores[test_i][method_i]);
-        }
-        ++best_score[min_element(scores[test_i].begin(), scores[test_i].end()) - scores[test_i].begin()];
-    }
-    cout << setw(20) << "Method" << setw(15) << "Total score" << setw(12) << "Best count" << endl;
-    cout << setw(20) << "Random shuffle" << setw(15) << total_score[0] << setw(12) << best_score[0] << endl;
-    cout << setw(20) << "Edge-block DP" << setw(15) << total_score[1] << setw(12) << best_score[1] << endl;
-#endif
-
-    graph g = read_input(cin);
 
     vector<int> p;
+
+#ifndef MINGW:
+    p = solve_genetic(g);
+#endif
+#ifdef MINGW
     if (g.m <= 21) {
         p = solve_dp(g);
-    } else {
+    }
+    else {
         // p = solve_random_shuffle(g);
         p = solve_genetic(g);
     }
-    print_vector(p, 0, g.m); cout << '\n';
+#endif
+
+    for (int i = 0; i < p.size(); ++i) {
+        cout << p[i] + 1 << " ";
+    }
+    cout << '\n';
 }
+
+
 using namespace std;
 
-// #define FILE_INPUT
-
 int main(int argc, char *argv[]) {
-#ifdef FILE_INPUT
-    freopen("../test_samples/3.txt", "r", stdin);
-    // freopen("../input.txt", "r", stdin);
+#ifndef PARAM_SEARCH
+#ifdef INPUT
+    //freopen("../input.txt", "r", stdin);
+    solve();
 #endif
+#ifndef INPUT
+    run_tests();
+#endif
+#endif
+
 #ifdef PARAM_SEARCH
     param_search();
 #endif
-#ifndef PARAM_SEARCH
-    run_tests();
-#endif
+    return 0;
 }
 
 

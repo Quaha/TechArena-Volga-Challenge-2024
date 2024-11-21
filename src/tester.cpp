@@ -15,10 +15,10 @@ void minus_one(vector<int> &p) {
 }
 
 void run_tests() {
-    // int num_of_tests = 1;
+    int num_of_tests = 50;
     cout << "Run all tests" << endl;
-    vector<graph> test_graph(200);
-    for (int test_i = 0; test_i < 200; ++test_i) {
+    vector<graph> test_graph(num_of_tests);
+    for (int test_i = 0; test_i < num_of_tests; ++test_i) {
         string path = "../test_samples/" + to_string(test_i + 1) + ".txt";
         ifstream ifs(path);
         test_graph[test_i] = read_input(ifs);
@@ -27,11 +27,12 @@ void run_tests() {
 
     // vector<array<fp,2>> scores(200);
     fp total_score = 0.0;
+    int tests_passed = 0;
 #pragma omp parallel for reduction(+ : total_score)
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        if ((test_i + 1) % 5 == 0) {
-            string out = "Running on test " + to_string(test_i + 1);
-            cout << out << endl;
+    for (int test_i = 0; test_i < num_of_tests; ++test_i) {
+        #pragma omp critical
+        {
+            cout << "Running on test " << (++tests_passed) << endl;
         }
         auto &g = test_graph[test_i];
         fp c_log_sum = 0.0;

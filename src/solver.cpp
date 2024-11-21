@@ -43,20 +43,11 @@ vector<int> solve_dp(const graph &g) {
 
 // genetic algorithm
 
-#define NOT_SUBMISSION
-#ifdef NOT_SUBMISSION
 vector<int> solve_genetic(const graph &g,
                           int max_pop_size,
                           int mutations_per_iter,
                           int selection_remain,
                           int random_init_size) {
-#else
-vector<int> solve_genetic(const graph &g,
-                          int max_pop_size = 768,
-                          int mutations_per_iter = 96,
-                          int selection_remain = 192,
-                          int random_init_size = 5120) {
-#endif
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
@@ -73,7 +64,7 @@ vector<int> solve_genetic(const graph &g,
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
         });
-        const int best_border = 0.75 * selection_remain;
+        const int best_border = best_selection_rate * selection_remain;
         shuffle(pop.begin() + best_border, pop.end(), rng);
         // const int worst_border = 0.85 * selection_remain;
         // for (int i = worst_border; i < selection_remain; ++i) {
@@ -132,7 +123,7 @@ vector<int> solve_genetic(const graph &g,
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
     mt19937_64 pos_rng{random_device{}()};
     while (get_time_seconds() < 4.91) {
-        const int crossover_cnt = 0.8 * (max_pop_size - selection_remain);
+        const int crossover_cnt = crossover_rate * (max_pop_size - selection_remain);
         const int mutation_cnt = max_pop_size - crossover_cnt - selection_remain;
         for (int i = 0; i < crossover_cnt; ++i) {
             unif_pop.param(param_type(0, pop.size() - 1));

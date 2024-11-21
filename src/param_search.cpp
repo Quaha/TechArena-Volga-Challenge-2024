@@ -42,8 +42,12 @@ void param_search() {
                             c_log_sum += log(g.c[i]);
                         }
                         c_log_sum *= g.m;
-                        total_score += c_log_sum / log(calculate_score(solve_genetic(g, max_pop_size,
+                        fp score = numeric_limits<fp>::max();
+                        for (int repeats = 0; repeats < 3; ++repeats) {
+                            score = min(score, calculate_score(solve_genetic(g, max_pop_size,
                                                     mutations_per_iter, selection_remain), g));
+                        }
+                        total_score += c_log_sum / log(score);
                     }
                     string verb = "Total score for (" + to_string(max_pop_size) + ","
                                 + to_string(mutations_per_iter) + ","

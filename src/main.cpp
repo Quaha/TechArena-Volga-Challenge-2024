@@ -7,7 +7,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 #ifndef PARAM_SEARCH
 #ifdef INPUT
-    //freopen("../input.txt", "r", stdin);
+    freopen("../test_samples/1.txt", "r", stdin);
     solve();
 #endif
 #ifndef INPUT

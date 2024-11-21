@@ -1,8 +1,14 @@
+import random
+
 import os
 
 num_of_files = 200
 folder_name = 'test_samples'
 
+min_count_of_tables = 50
+max_count_of_tables = 200
+
+max_count_of_operations = 200
 
 class RandomGenerator:
     def __init__(self, seed, a=6364136223846793005, c=10139042347423, m=2 ** 64 - 1):
@@ -32,14 +38,24 @@ def main():
     for i in range(1, num_of_files + 1):
         file_name = os.path.join(folder_name, f"{i}.txt")
 
-        n = generator.randint(1, 200)
-        m = generator.randint(1, 200)
+        n = generator.randint(min_count_of_tables, max_count_of_tables)
+        m = generator.randint(n, max_count_of_operations)
 
         M = generator.randint(0, int(1e16))
-        F = generator.randint(0, 2)
+        F = generator.randint(1, 2)
 
-        data = [generator.randint(1, int(1e9)) for i in range(n)]
-        operations = [[generator.randint(1, n), generator.randint(1, n), generator.random()] for i in range(m)]
+        data = [generator.randint(1, int(1e9)) for j in range(n)]
+        operations = []
+
+        order = [j for j in range(1, n + 1)]
+
+        random.shuffle(order)
+
+        for j in range(n - 1):
+            operations.append([order[-1], order[-2], generator.random()])
+            order.pop()
+
+        operations += [[generator.randint(1, n), generator.randint(1, n), generator.random()] for j in range(m - n + 1)]
 
         with open(file_name, 'w') as file:
             file.write(f"{n} {m}\n")

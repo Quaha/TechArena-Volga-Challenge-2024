@@ -57,7 +57,8 @@ void param_search() {
                             }
                             c_log_sum *= g.m;
                             fp score = calculate_score(solve_genetic(g, max_pop_size,
-                                                        mutations_per_iter, selection_remain), g);
+                                                        mutations_per_iter, selection_remain,
+                                                        random_init_size), g);
                             total_score += c_log_sum / log(score);
                         }
                         avg_total_score += total_score;

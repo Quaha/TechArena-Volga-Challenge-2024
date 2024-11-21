@@ -16,7 +16,7 @@ void minus_one(vector<int> &p) {
 
 void run_tests() {
     // int num_of_tests = 1;
-#ifdef RUN_TESTS
+    cout << "Run all tests" << endl;
     vector<graph> test_graph(200);
     for (int test_i = 0; test_i < 200; ++test_i) {
         string path = "../test_samples/" + to_string(test_i + 1) + ".txt";
@@ -25,38 +25,34 @@ void run_tests() {
         ifs.close();
     }
 
-    vector<array<fp,2>> scores(200);
-#pragma omp parallel for
+    // vector<array<fp,2>> scores(200);
+    fp total_score = 0.0;
+#pragma omp parallel for reduction(+ : total_score)
     for (int test_i = 0; test_i < 200; ++test_i) {
         if ((test_i + 1) % 5 == 0) {
             string out = "Running on test " + to_string(test_i + 1);
             cout << out << endl;
         }
         auto &g = test_graph[test_i];
-        scores[test_i] = {
-            calculate_score(solve_random_shuffle(g), g),
-            calculate_score(solve_edge_blocking_dp(g), g)
-        };
-    }
-    for (int test_i = 0; test_i < 200; ++test_i) {
-        cout << scores[test_i][0] << ' ' << scores[test_i][1] << '\n';
-    }
-    fp total_score[2]{};
-    int best_score[2]{};
-    for (int test_i = 0; test_i < 200; ++test_i) {
         fp c_log_sum = 0.0;
-        auto &g = test_graph[test_i];
         for (int i = 0; i < g.n; ++i) {
             c_log_sum += log(g.c[i]);
         }
         c_log_sum *= g.m;
-        for (int method_i = 0; method_i < 2; ++method_i) {
-            total_score[method_i] += c_log_sum / log(scores[test_i][method_i]);
-        }
-        ++best_score[min_element(scores[test_i].begin(), scores[test_i].end()) - scores[test_i].begin()];
+        
+        total_score += c_log_sum / log(calculate_score(solve_genetic(g,
+                                                                     opt_max_pop_size,
+                                                                     opt_mutations_per_iter,
+                                                                     opt_selection_remain,
+                                                                     opt_random_init_size), g));
+        // scores[test_i] = {
+        //     calculate_score(solve_random_shuffle(g), g),
+        //     calculate_score(solve_edge_blocking_dp(g), g)
+        // };
     }
-    cout << setw(20) << "Method" << setw(15) << "Total score" << setw(12) << "Best count" << endl;
-    cout << setw(20) << "Random shuffle" << setw(15) << total_score[0] << setw(12) << best_score[0] << endl;
-    cout << setw(20) << "Edge-block DP" << setw(15) << total_score[1] << setw(12) << best_score[1] << endl;
-#endif
+    cout.precision(15);
+    cout << "Total score: " << fixed << total_score << endl;
+    // cout << setw(20) << "Method" << setw(15) << "Total score" << setw(12) << "Best count" << endl;
+    // cout << setw(20) << "Random shuffle" << setw(15) << total_score[0] << setw(12) << best_score[0] << endl;
+    // cout << setw(20) << "Edge-block DP" << setw(15) << total_score[1] << setw(12) << best_score[1] << endl;
 }

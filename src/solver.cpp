@@ -121,7 +121,7 @@ vector<int> solve_genetic(const graph &g,
 
     int iter_count = 0;
     // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
-    while (get_time_seconds() < 4.85) {
+    while (get_time_seconds() < 4.8) {
         mt19937_64 rng{random_device{}()};
         for (int i = selection_remain; i < max_pop_size; ++i) {
             int l = unif_pos(rng);

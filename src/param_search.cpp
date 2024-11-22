@@ -1,12 +1,8 @@
+#include "includes.h"
 #include "param_search.h"
 #include "graph.h"
 #include "solver.h"
 #include "checker.h"
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <string>
 using namespace std;
 
 void param_search() {
@@ -56,9 +52,14 @@ void param_search() {
                                 c_log_sum += log(g.c[i]);
                             }
                             c_log_sum *= g.m;
-                            fp score = calculate_score(solve_genetic(g, max_pop_size,
-                                                        mutations_per_iter, selection_remain,
-                                                        random_init_size), g);
+                            fp score = calculate_score(solve_genetic(g,
+                                                       def_max_pop_size,
+                                                       def_mutations_per_iter,
+                                                       def_selection_remain,
+                                                       def_random_init_size,
+                                                       def_best_selection_rate,
+                                                       def_crossover_rate,
+                                                       def_repeats), g);
                             total_score += c_log_sum / log(score);
                         }
                         avg_total_score += total_score;

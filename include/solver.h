@@ -11,4 +11,5 @@ vector<int> solve_genetic(const graph &g,
                           int best_selection_rate,
                           int crossover_rate,
                           int repeats);
+vector<int> solve_genetic(const graph &g);
 vector<int> solve_dp(const graph &g);

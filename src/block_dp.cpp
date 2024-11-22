@@ -25,7 +25,11 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
     mask_c[0] = g.c;
     for (unsigned int mask = 1; mask < (1 << m); ++mask) {
         dp[mask] = numeric_limits<fp>::max();
-        int bit = countr_zero(mask);
+#ifdef MSVC
+        int bit = countr_zero((unsigned int)mask);
+#else
+        int bit = __builtin_ctz(mask);
+#endif
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];
         auto [u, v, w] = g.edges[edges[bit]];

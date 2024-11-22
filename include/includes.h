@@ -13,6 +13,7 @@
 #include <functional>
 #include <utility>
 #include <bit>
+#pragma GCC optimize("Ofast,inline,unroll-loops")
 
 using namespace std;
 using fp = long double;
@@ -30,3 +31,4 @@ using std::istream;
 // #define PARAM_SEARCH
 // #define RUN_TESTS
 // #define FILE_INPUT
+// #define MSVC

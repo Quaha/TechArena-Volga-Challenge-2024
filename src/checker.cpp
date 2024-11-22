@@ -27,16 +27,21 @@ struct KahanSum {
     }
 };
 
-// DSU score_dsu(200);
-// fp score_c[200];
+#ifndef PARAM_SEARCH
+DSU score_dsu(200);
+fp score_c[200];
+#endif
 
 fp calculate_score(const vector<int> &p, const graph &g) {
-    KahanSum A;
+#ifdef PARAM_SEARCH
     DSU score_dsu(g.n);
-    score_dsu.init(g.n);
     vector<fp> score_c = g.c;
-    // for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
+#else
+    score_dsu.init(g.n);
+    for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
+#endif
 
+    KahanSum A;
     for (int ei : p) {
         auto [u, v, w] = g.edges[ei];
         u = score_dsu.get(u);

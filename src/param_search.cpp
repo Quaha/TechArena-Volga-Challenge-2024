@@ -53,10 +53,10 @@ void param_search() {
                             }
                             c_log_sum *= g.m;
                             fp score = calculate_score(solve_genetic(g,
-                                                       def_max_pop_size,
-                                                       def_mutations_per_iter,
-                                                       def_selection_remain,
-                                                       def_random_init_size,
+                                                       max_pop_size,
+                                                       mutations_per_iter,
+                                                       selection_remain,
+                                                       random_init_size,
                                                        def_best_selection_rate,
                                                        def_crossover_rate,
                                                        def_repeats), g);

@@ -22,7 +22,7 @@ struct graph {
 graph read_input(istream &ist);
 
 struct DSU {
-    vector<int> root, sz;
+    vector<int> root, sz, upd;
     DSU();
     DSU(int n);
     void init(int n);

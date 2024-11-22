@@ -34,9 +34,18 @@ void DSU::init(int n) {
     root.resize(n);
     iota(root.begin(), root.end(), 0);
     sz.assign(n, 1);
+    upd.reserve(n);
 }
 int DSU::get(int x) {
-    return x == root[x] ? x : root[x] = get(root[x]);
+    upd.clear();
+    while (x != root[x]) {
+        upd.push_back(x);
+        x = root[x];
+    }
+    for (int y : upd) {
+        root[y] = x;
+    }
+    return x;
 }
 void DSU::merge(int x, int y) {
     x = get(x);

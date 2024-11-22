@@ -1,4 +1,3 @@
-#define INPUT
 #define MINGW
 #include <algorithm>
 #include <cassert>
@@ -20,13 +19,17 @@ using fp = long double;
 using std::vector;
 using std::istream;
 
-#define opt_max_pop_size 768
-#define opt_mutations_per_iter 96
-#define opt_selection_remain 192
-#define opt_random_init_size 5120 
+#define def_max_pop_size 256
+#define def_mutations_per_iter 24
+#define def_selection_remain 32
+#define def_random_init_size 2048
+#define def_best_selection_rate 0.6
+#define def_crossover_rate 0.7
+#define def_repeats 12
 
-//#define MINGW
-// #define INPUT
+// #define PARAM_SEARCH
+// #define RUN_TESTS
+// #define FILE_INPUT
 
 
 
@@ -272,7 +275,7 @@ vector<int> solve_random_shuffle(const graph &g) {
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
-        return (current - start).count() / 1000000000.0;
+        return (current - start).count() * 1e-9;
     };
     vector<int> p(g.m), p_min;
     iota(p.begin(), p.end(), 0);
@@ -292,13 +295,6 @@ vector<int> solve_random_shuffle(const graph &g) {
     return p_min;
 }
 
-vector<int> solve_greedy_edgesort(const graph &g) {
-    vector<int> ei(g.m);
-    iota(ei.begin(), ei.end(), 0);
-    sort(ei.begin(), ei.end(), [&](int i, int j) {return g.edges[i].w < g.edges[j].w;});
-    return ei;
-}
-
 vector<int> solve_dp(const graph &g) {
     vector<int> edges(g.m);
     iota(edges.begin(), edges.end(), 0);
@@ -311,13 +307,18 @@ vector<int> solve_genetic(const graph &g,
                           int max_pop_size,
                           int mutations_per_iter,
                           int selection_remain,
-                          int random_init_size) {
+                          int random_init_size,
+                          int best_selection_rate,
+                          int crossover_rate,
+                          int repeats) {
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
         auto current = chrono::high_resolution_clock::now();
-        return (current - start).count() / 1000000000.0;
+        return (current - start).count() * 1e-9;
     };
  
+    double time_limit = 4.9 / repeats;
+
     vector<pair<fp, vector<int>>> pop;
     pop.reserve(max(random_init_size, max_pop_size));
  
@@ -328,12 +329,8 @@ vector<int> solve_genetic(const graph &g,
         sort(pop.begin(), pop.end(), [&](const auto &a, const auto &b) {
             return a.first < b.first;
         });
-        const int best_border = 0.75 * selection_remain;
+        const int best_border = best_selection_rate * selection_remain;
         shuffle(pop.begin() + best_border, pop.end(), rng);
-        // const int worst_border = 0.85 * selection_remain;
-        // for (int i = worst_border; i < selection_remain; ++i) {
-        //     pop[i] = pop[pop.size() - selection_remain + i];
-        // }
         pop.resize(selection_remain);
         if (pop[0].first < min_score) {
             min_score = pop[0].first;
@@ -347,8 +344,6 @@ vector<int> solve_genetic(const graph &g,
     uniform_int_distribution<int> unif_pos(0, g.m - 1);
     vector<int> map(g.m), map_yx(g.m);
     auto crossover = [&](const auto &x, const auto &y, int l, int r) {
-        // vector<int> p(g.m);
- 
         for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
         for (int i = l; i <= r; ++i) {
             p[i] = y[i];
@@ -366,55 +361,51 @@ vector<int> solve_genetic(const graph &g,
                 p[i] = map_yx[p[i]];
             }
         }
- 
-        // assert(is_permutation(p.begin(), p.end(), id.begin()));
- 
-        // return p;
     };
  
  
-    iota(p.begin(), p.end(), 0);
-    for (int i = 0; i < random_init_size; ++i) {
-        shuffle(p.begin(), p.end(), rng);
-        pop.emplace_back(calculate_score(p, g), p);
-    }
-    selection();
-    // cout << "Iteration 0, best score: " << pop[0].first << endl;
-
-    using param_type = uniform_int_distribution<int>::param_type;
- 
-    // int iter_count = 0;
-    // for (int ga_iter = 0; ga_iter < iterations; ++ga_iter) {
     mt19937_64 pos_rng{random_device{}()};
-    while (get_time_seconds() < 4.91) {
-        const int crossover_cnt = 0.8 * (max_pop_size - selection_remain);
-        const int mutation_cnt = max_pop_size - crossover_cnt - selection_remain;
-        for (int i = 0; i < crossover_cnt; ++i) {
-            unif_pop.param(param_type(0, pop.size() - 1));
-            int l = unif_pos(pos_rng);
-            int r = unif_pos(pos_rng);
-            if (l > r) swap(l, r);
-            crossover(pop[unif_pop(rng)].second, pop[unif_pop(rng)].second, l, r);
+    using param_type = uniform_int_distribution<int>::param_type;
+    iota(p.begin(), p.end(), 0);
+    
+    
+    for (int ga_repeat = 0; ga_repeat < repeats; ++ga_repeat) {
+        start = chrono::high_resolution_clock::now();
+        pop.clear();
+        
+        for (int i = 0; i < random_init_size; ++i) {
+            shuffle(p.begin(), p.end(), rng);
             pop.emplace_back(calculate_score(p, g), p);
-        }
-        for (int i = 0; i < mutation_cnt; ++i) {
-            unif_pop.param(param_type(0, pop.size() - 1));
-            vector<int> p = pop[unif_pop(rng)].second;
-            int pos1 = unif_pos(rng), pos2 = unif_pos(rng);
-            swap(p[pos1], p[pos2]);
-            pop.emplace_back(calculate_score(p, g), p);
-        }
-        for (int mut_i = 0; mut_i < mutations_per_iter; ++mut_i) {
-            int pop_i = unif_pop(rng);
-            int pos1 = unif_pos(pos_rng), pos2 = unif_pos(pos_rng);
-            swap(pop[pop_i].second[pos1], pop[pop_i].second[pos2]);
-            pop[pop_i].first = calculate_score(pop[pop_i].second, g);
         }
         selection();
-        // ++iter_count;
-        // cout << "Iteration " << iter_count << ", best score: " << pop[0].first << endl;
+        
+        while (get_time_seconds() < time_limit) {
+            const int crossover_cnt = crossover_rate * (max_pop_size - selection_remain);
+            const int mutation_cnt = max_pop_size - crossover_cnt - selection_remain;
+            for (int i = 0; i < crossover_cnt; ++i) {
+                unif_pop.param(param_type(0, pop.size() - 1));
+                int l = unif_pos(pos_rng);
+                int r = unif_pos(pos_rng);
+                if (l > r) swap(l, r);
+                crossover(pop[unif_pop(rng)].second, pop[unif_pop(rng)].second, l, r);
+                pop.emplace_back(calculate_score(p, g), p);
+            }
+            for (int i = 0; i < mutation_cnt; ++i) {
+                unif_pop.param(param_type(0, pop.size() - 1));
+                vector<int> p = pop[unif_pop(rng)].second;
+                int pos1 = unif_pos(rng), pos2 = unif_pos(rng);
+                swap(p[pos1], p[pos2]);
+                pop.emplace_back(calculate_score(p, g), p);
+            }
+            for (int mut_i = 0; mut_i < mutations_per_iter; ++mut_i) {
+                int pop_i = unif_pop(rng);
+                int pos1 = unif_pos(pos_rng), pos2 = unif_pos(pos_rng);
+                swap(pop[pop_i].second[pos1], pop[pop_i].second[pos2]);
+                pop[pop_i].first = calculate_score(pop[pop_i].second, g);
+            }
+            selection();
+        }
     }
-    // cout << iter_count << '\n';
     return p_ans;
 }
 
@@ -435,10 +426,13 @@ void solve() {
 
 #ifndef MINGW
     p = solve_genetic(g,
-                      opt_max_pop_size,
-                      opt_mutations_per_iter,
-                      opt_selection_remain,
-                      opt_random_init_size);
+                      def_max_pop_size,
+                      def_mutations_per_iter,
+                      def_selection_remain,
+                      def_random_init_size,
+                      def_best_selection_rate,
+                      def_crossover_rate,
+                      def_repeats);
 #endif
 #ifdef MINGW
     if (g.m <= 21) {
@@ -447,10 +441,13 @@ void solve() {
     else {
         // p = solve_random_shuffle(g);
         p = solve_genetic(g,
-                          opt_max_pop_size,
-                          opt_mutations_per_iter,
-                          opt_selection_remain,
-                          opt_random_init_size);
+                          def_max_pop_size,
+                          def_mutations_per_iter,
+                          def_selection_remain,
+                          def_random_init_size,
+                          def_best_selection_rate,
+                          def_crossover_rate,
+                          def_repeats);
     }
 #endif
 
@@ -464,18 +461,20 @@ void solve() {
 using namespace std;
 
 int main(int argc, char *argv[]) {
-#ifndef PARAM_SEARCH
-#ifdef INPUT
-    // freopen("../test_samples/1.txt", "r", stdin);
-    solve();
-#endif
-#ifndef INPUT
-    run_tests();
-#endif
-#endif
-
-#ifdef PARAM_SEARCH
+#if defined(PARAM_SEARCH)
     param_search();
+#elif defined(RUN_TESTS)
+    run_tests();
+#else
+#if defined(FILE_INPUT)
+    cout << "Run test case from file" << endl;
+    if (freopen("../test_samples/1.txt", "r", stdin) == NULL) {
+        cout << "Can't open input file" << endl;
+        return -1;
+    }
+    cout << "Opened file, running test..." << endl;
+#endif
+    solve();
 #endif
     return 0;
 }

@@ -42,10 +42,13 @@ void run_tests() {
         c_log_sum *= g.m;
         
         total_score += c_log_sum / log(calculate_score(solve_genetic(g,
-                                                                     opt_max_pop_size,
-                                                                     opt_mutations_per_iter,
-                                                                     opt_selection_remain,
-                                                                     opt_random_init_size), g));
+                                                                     def_max_pop_size,
+                                                                     def_mutations_per_iter,
+                                                                     def_selection_remain,
+                                                                     def_random_init_size,
+                                                                     def_best_selection_rate,
+                                                                     def_crossover_rate,
+                                                                     def_repeats), g));
         // scores[test_i] = {
         //     calculate_score(solve_random_shuffle(g), g),
         //     calculate_score(solve_edge_blocking_dp(g), g)

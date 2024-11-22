@@ -23,9 +23,9 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
 #ifdef MINGW
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
-    for (int mask = 1; mask < (1 << m); ++mask) {
+    for (unsigned int mask = 1; mask < (1 << m); ++mask) {
         dp[mask] = numeric_limits<fp>::max();
-        int bit = __builtin_ctz(mask);
+        int bit = countr_zero(mask);
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];
         auto [u, v, w] = g.edges[edges[bit]];
@@ -42,7 +42,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
             mask_c[mask][u] = c_result;
         }
     }
-    for (int mask = 0; mask < (1 << m) - 1; ++mask) {
+    for (unsigned int mask = 0; mask < (1 << m) - 1; ++mask) {
         for (int bit = 0; bit < m; ++bit) {
             if (mask & (1 << bit)) continue;
             fp cost = 0.0;

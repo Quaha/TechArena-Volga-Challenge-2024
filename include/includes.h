@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <functional>
 #include <utility>
+#include <bit>
 
 using namespace std;
 using fp = long double;

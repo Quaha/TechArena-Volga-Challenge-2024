@@ -6,7 +6,7 @@
 using namespace std;
 
 void param_search() {
-    int num_of_tests = 24;
+    int num_of_tests = 64;
     vector<graph> test_graph(num_of_tests);
     for (int test_i = 0; test_i < num_of_tests; ++test_i) {
         string path = "../test_samples/" + to_string(test_i + 1) + ".txt";

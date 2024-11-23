@@ -1,8 +1,6 @@
 #define MINGW
 #include <algorithm>
 #include <bit>
-#include <cassert>
-#include <cfloat>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -21,13 +19,15 @@ using fp = long double;
 using std::vector;
 using std::istream;
 
-#define def_max_pop_size 256
-#define def_mutations_per_iter 24
-#define def_selection_remain 32
-#define def_random_init_size 2048
+#define def_max_pop_size 64
+#define def_mutations_per_iter 6
+#define def_selection_remain 16
+#define def_random_init_size 64
 #define def_best_selection_rate 0.6
 #define def_crossover_rate 0.7
 #define def_repeats 12
+
+#define MINGW
 
 // #define PARAM_SEARCH
 // #define RUN_TESTS
@@ -119,30 +119,6 @@ void DSU::merge(int x, int y) {
     if (sz[x] > sz[y]) swap(x,y);
     sz[y] += sz[x];
     root[x] = y;
-}
-
-vector<vector<int>> get_connected_components(const graph &g) {
-    vector<vector<int>> comp;
-    vector<char> was(g.n);
-    int comp_num = 0;
-    function<void(int)> dfs = [&](int u) {
-        was[u] = 1;
-        comp.back().push_back(u);
-        for (int ei : g.adj[u]) {
-            auto &[x, y, w] = g.edges[ei];
-            int v = x ^ y ^ u;
-            if (was[v]) continue;
-            dfs(v);
-        }
-    };
-    for (int i = 0; i < g.n; ++i) {
-        if (!was[i]) {
-            comp.emplace_back();
-            dfs(i);
-            ++comp_num;
-        }
-    }
-    return comp;
 }
 
 
@@ -291,30 +267,6 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
 }
 
 
-
-vector<int> solve_random_shuffle(const graph &g) {
-    auto start = chrono::high_resolution_clock::now();
-    auto get_time_seconds = [&]() {
-        auto current = chrono::high_resolution_clock::now();
-        return (current - start).count() * 1e-9;
-    };
-    vector<int> p(g.m), p_min;
-    iota(p.begin(), p.end(), 0);
-    p_min = p;
-    fp min_score = numeric_limits<fp>::max();
-    mt19937_64 rng{random_device{}()};
-
-    while (get_time_seconds() < 4.93) {
-        shuffle(p.begin(), p.end(), rng);
-        fp score = calculate_score(p, g);
-        if (score < min_score) {
-            p_min = p;
-            min_score = score;
-        }
-    }
-
-    return p_min;
-}
 
 vector<int> solve_dp(const graph &g) {
     vector<int> edges(g.m);
@@ -552,7 +504,6 @@ void solve() {
         p = solve_dp(g);
     }
     else {
-        // p = solve_random_shuffle(g);
         p = solve_genetic(g);
     }
 #endif

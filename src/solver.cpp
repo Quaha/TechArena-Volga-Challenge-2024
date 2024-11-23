@@ -4,30 +4,6 @@
 #include "tester.h"
 #include "block_dp.h"
 
-vector<int> solve_random_shuffle(const graph &g) {
-    auto start = chrono::high_resolution_clock::now();
-    auto get_time_seconds = [&]() {
-        auto current = chrono::high_resolution_clock::now();
-        return (current - start).count() * 1e-9;
-    };
-    vector<int> p(g.m), p_min;
-    iota(p.begin(), p.end(), 0);
-    p_min = p;
-    fp min_score = numeric_limits<fp>::max();
-    mt19937_64 rng{random_device{}()};
-
-    while (get_time_seconds() < 4.93) {
-        shuffle(p.begin(), p.end(), rng);
-        fp score = calculate_score(p, g);
-        if (score < min_score) {
-            p_min = p;
-            min_score = score;
-        }
-    }
-
-    return p_min;
-}
-
 vector<int> solve_dp(const graph &g) {
     vector<int> edges(g.m);
     iota(edges.begin(), edges.end(), 0);
@@ -41,8 +17,8 @@ vector<int> solve_genetic(const graph &g,
                           int mutations_per_iter,
                           int selection_remain,
                           int random_init_size,
-                          int best_selection_rate,
-                          int crossover_rate,
+                          double best_selection_rate,
+                          double crossover_rate,
                           int repeats) {
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
@@ -50,7 +26,7 @@ vector<int> solve_genetic(const graph &g,
         return (current - start).count() * 1e-9;
     };
  
-    double time_limit = 4.9 / repeats;
+    double time_limit = 4.85 / repeats;
 
     vector<pair<fp, vector<int>>> pop;
     pop.reserve(max(random_init_size, max_pop_size));
@@ -264,7 +240,6 @@ void solve() {
         p = solve_dp(g);
     }
     else {
-        // p = solve_random_shuffle(g);
         p = solve_genetic(g);
     }
 #endif

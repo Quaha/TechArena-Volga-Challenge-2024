@@ -55,27 +55,3 @@ void DSU::merge(int x, int y) {
     sz[y] += sz[x];
     root[x] = y;
 }
-
-vector<vector<int>> get_connected_components(const graph &g) {
-    vector<vector<int>> comp;
-    vector<char> was(g.n);
-    int comp_num = 0;
-    function<void(int)> dfs = [&](int u) {
-        was[u] = 1;
-        comp.back().push_back(u);
-        for (int ei : g.adj[u]) {
-            auto &[x, y, w] = g.edges[ei];
-            int v = x ^ y ^ u;
-            if (was[v]) continue;
-            dfs(v);
-        }
-    };
-    for (int i = 0; i < g.n; ++i) {
-        if (!was[i]) {
-            comp.emplace_back();
-            dfs(i);
-            ++comp_num;
-        }
-    }
-    return comp;
-}

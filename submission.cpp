@@ -1,5 +1,6 @@
 #define MINGW
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -19,12 +20,12 @@ using fp = long double;
 using std::vector;
 using std::istream;
 
-#define def_max_pop_size 64
+#define def_max_pop_size 32
 #define def_mutations_per_iter 6
-#define def_selection_remain 16
+#define def_selection_remain 8
 #define def_random_init_size 64
 #define def_best_selection_rate 0.6
-#define def_crossover_rate 0.7
+#define def_crossover_rate 0.0
 #define def_repeats 12
 
 #define MINGW
@@ -33,6 +34,12 @@ using std::istream;
 // #define RUN_TESTS
 // #define FILE_INPUT
 // #define MSVC
+
+
+// #define KAHAN_SUM
+#if defined(MSVC) || !defined(PARAM_SEARCH) && !defined(RUN_TESTS)
+#define OPTIMIZED_DSU
+#endif
 
 
 
@@ -121,7 +128,6 @@ void DSU::merge(int x, int y) {
     root[x] = y;
 }
 
-
 fp penalty(fp c, fp M, fp F) {
     if (c <= M) return 0.0;
     return F * (c - M);
@@ -135,31 +141,97 @@ fp cost2(fp c1, fp c2, fp c_result, fp M, fp F) {
     return c1 + c2 + c_result + penalty(c_result, M, F);
 }
 
+#ifdef KAHAN_SUM
 struct KahanSum {
     fp s = 0.0;
     fp e = 0.0;
     void add(fp x) {
-        s += x;
         fp d = x - e;
         fp t = s + d;
         e = (t - s) - d;
         s = t;
     }
 };
-
-#ifndef PARAM_SEARCH
-DSU score_dsu(200);
-fp score_c[200];
 #endif
+
+#if defined(OPTIMIZED_DSU)
+
+int root[200], sz[200], upd[200];
+void static_dsu_init(int n) {
+    for (int i = 0; i < n; ++i) {
+        root[i] = i;
+        sz[i] = 1;
+    }
+}
+int static_dsu_get(int x) {
+    int ui = 0;
+    while (x != root[x]) {
+        upd[ui++] = x;
+        x = root[x];
+    }
+    for (int i = 0; i < ui; ++i) {
+        root[upd[i]] = x;
+    }
+    return x;
+}
+int static_dsu_merge(int x, int y) {
+    x = static_dsu_get(x);
+    y = static_dsu_get(y);
+    if (x == y) return x;
+    if (sz[x] > sz[y]) swap(x,y);
+    sz[y] += sz[x];
+    root[x] = y;
+    return y;
+}
+
+fp score_c[200];
+fp calculate_score(const vector<int> &p, const graph &g) {
+    static_dsu_init(g.n);
+    for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
+
+#ifdef KAHAN_SUM
+    KahanSum A;
+#else
+    fp A = 0.0;
+#endif
+    for (int ei : p) {
+        auto [u, v, w] = g.edges[ei];
+        u = static_dsu_get(u);
+        v = static_dsu_get(v);
+        if (u == v) {
+            fp c = score_c[u];
+            fp c_result = w * c;
+        #ifdef KAHAN_SUM
+            A.add(cost1(c, c_result, g.M, g.F));
+        #else
+            A += cost1(c, c_result, g.M, g.F);
+        #endif
+            score_c[u] = c_result;
+        } else {
+            fp c1 = score_c[u];
+            fp c2 = score_c[v];
+            fp c_result = w * c1 * c2;
+        #ifdef KAHAN_SUM
+            A.add(cost2(c1, c2, c_result, g.M, g.F));
+        #else
+            A += cost2(c1, c2, c_result, g.M, g.F);
+        #endif
+            
+            score_c[static_dsu_merge(u,v)] = c_result;
+        }
+    }
+
+#ifdef KAHAN_SUM
+    return A.s;
+#else
+    return A;
+#endif
+}
+#else
 
 fp calculate_score(const vector<int> &p, const graph &g) {
-#ifdef PARAM_SEARCH
     DSU score_dsu(g.n);
     vector<fp> score_c = g.c;
-#else
-    score_dsu.init(g.n);
-    for (int i = 0; i < g.n; ++i) score_c[i] = g.c[i];
-#endif
 
     KahanSum A;
     for (int ei : p) {
@@ -181,6 +253,72 @@ fp calculate_score(const vector<int> &p, const graph &g) {
     }
 
     return A.s;
+}
+#endif
+
+fp calculate_score_precise(const vector<int> &p, const graph &g) {
+    fp exp_val_arr[1 << 16]{};
+    fp *exp_val = exp_val_arr + (1 << 15);
+    auto add = [&](fp x) {
+        int ex;
+        fp mant = frexp(x, &ex);
+        exp_val[ex] += mant;
+    };
+    auto penalty_precise = [&](fp c, fp M, fp F) {
+        if (c <= M) return;
+        add(F * c);
+        add(- F * M);
+    };
+    auto cost1_precise = [&](fp c, fp c_result, fp M, fp F) {
+        add(c);
+        add(c_result);
+        penalty_precise(c_result, M, F);
+    };
+    auto cost2_precise = [&](fp c1, fp c2, fp c_result, fp M, fp F) {
+        add(c1);
+        add(c2);
+        add(c_result);
+        penalty_precise(c_result, M, F);
+    };
+    auto total_score = [&]() {
+        int max_exp = 0;
+        int min_exp = 0;
+        for (int i = -(1<<14); i <= (1<<14); ++i) {
+            if (exp_val[i] != fp(0.0)) {
+                min_exp = min(min_exp, i);
+                max_exp = max(max_exp, i);
+            }
+        }
+        fp mant = 0.0;
+        for (int i = 0; i <= max_exp; ++i) {
+            mant = ldexp(mant, -1);
+            mant += exp_val[i];
+        }
+        return log2(mant) + max_exp;
+    };
+
+    DSU score_dsu(g.n);
+    vector<fp> score_c = g.c;
+
+    for (int ei : p) {
+        auto [u, v, w] = g.edges[ei];
+        u = score_dsu.get(u);
+        v = score_dsu.get(v);
+        if (u == v) {
+            fp c_result = w * score_c[u];
+            cost1_precise(score_c[u], c_result, g.M, g.F);
+            score_c[u] = c_result;
+        } else {
+            fp c1 = score_c[u];
+            fp c2 = score_c[v];
+            fp c_result = w * c1 * c2;
+            cost2_precise(score_c[u], score_c[v], c_result, g.M, g.F);
+            score_dsu.merge(u,v);
+            score_c[score_dsu.get(u)] = c_result;
+        }
+    }
+
+    return total_score();
 }
 
 using namespace std;
@@ -281,8 +419,8 @@ vector<int> solve_genetic(const graph &g,
                           int mutations_per_iter,
                           int selection_remain,
                           int random_init_size,
-                          int best_selection_rate,
-                          int crossover_rate,
+                          double best_selection_rate,
+                          double crossover_rate,
                           int repeats) {
     auto start = chrono::high_resolution_clock::now();
     auto get_time_seconds = [&]() {
@@ -290,7 +428,7 @@ vector<int> solve_genetic(const graph &g,
         return (current - start).count() * 1e-9;
     };
  
-    double time_limit = 4.9 / repeats;
+    double time_limit = 4.85 / repeats;
 
     vector<pair<fp, vector<int>>> pop;
     pop.reserve(max(random_init_size, max_pop_size));
@@ -315,7 +453,7 @@ vector<int> solve_genetic(const graph &g,
     vector<int> id(g.m); iota(id.begin(), id.end(), 0);
     uniform_int_distribution<int> unif_pop(0, selection_remain - 1);
     uniform_int_distribution<int> unif_pos(0, g.m - 1);
-    vector<int> map(g.m), map_yx(g.m);
+    int map_yx[200]{};
     auto crossover = [&](const auto &x, const auto &y, int l, int r) {
         for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
         for (int i = l; i <= r; ++i) {
@@ -414,7 +552,7 @@ vector<int> solve_genetic(const graph &g) {
     vector<int> id(g.m); iota(id.begin(), id.end(), 0);
     uniform_int_distribution<int> unif_pop(0, def_selection_remain - 1);
     uniform_int_distribution<int> unif_pos(0, g.m - 1);
-    vector<int> map(g.m), map_yx(g.m);
+    int map_yx[200]{};
     auto crossover = [&](const auto &x, const auto &y, int l, int r) {
         for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
         for (int i = l; i <= r; ++i) {

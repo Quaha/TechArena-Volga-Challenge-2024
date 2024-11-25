@@ -51,7 +51,7 @@ vector<int> solve_genetic(const graph &g,
     vector<int> id(g.m); iota(id.begin(), id.end(), 0);
     uniform_int_distribution<int> unif_pop(0, selection_remain - 1);
     uniform_int_distribution<int> unif_pos(0, g.m - 1);
-    vector<int> map(g.m), map_yx(g.m);
+    int map_yx[200]{};
     auto crossover = [&](const auto &x, const auto &y, int l, int r) {
         for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
         for (int i = l; i <= r; ++i) {
@@ -150,7 +150,7 @@ vector<int> solve_genetic(const graph &g) {
     vector<int> id(g.m); iota(id.begin(), id.end(), 0);
     uniform_int_distribution<int> unif_pop(0, def_selection_remain - 1);
     uniform_int_distribution<int> unif_pos(0, g.m - 1);
-    vector<int> map(g.m), map_yx(g.m);
+    int map_yx[200]{};
     auto crossover = [&](const auto &x, const auto &y, int l, int r) {
         for (int i = 0; i < g.m; ++i) map_yx[i] = -1;
         for (int i = l; i <= r; ++i) {

@@ -2,13 +2,11 @@ cmake_minimum_required(VERSION 3.12...3.18)
 
 project(TechArena LANGUAGES CXX)
 
-if(UNIX)
-    set(CMAKE_CXX_FLAGS "-std=c++2a -fopenmp")
-endif()
+set(CMAKE_CXX_FLAGS "-std=c++2a -fopenmp")
 
-#set(SOURCE_EXE src/main.cpp)
-add_compile_definitions(FILE_INPUT)
+#add_compile_definitions(FILE_INPUT)
 #add_compile_definitions(RUN_TESTS)
+#add_compile_definitions(PARAM_SEARCH)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -O0 -fsanitize=address)
     link_libraries(-g -O0 -fsanitize=address)

@@ -1,4 +1,5 @@
 #pragma once
+
 #include "includes.h"
 
 struct edge {
@@ -18,8 +19,10 @@ struct graph {
     void add_edge(int u, int v, fp w);
 };
 
+graph read_input(istream &ist);
+
 struct DSU {
-    vector<int> root, sz;
+    vector<int> root, sz, upd;
     DSU();
     DSU(int n);
     void init(int n);

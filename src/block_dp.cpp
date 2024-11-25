@@ -2,28 +2,34 @@
 
 #include "block_dp.h"
 #include "checker.h"
+using namespace std;
+const int MAX_M = 21;
 
 #ifndef RUN_TESTS
-DSU mask_dsu[1 << 21];
-vector<fp> mask_c[1 << 21];
-fp dp[1 << 21];
-int dp_arg[1 << 21];
+DSU mask_dsu[1 << MAX_M];
+vector<fp> mask_c[1 << MAX_M];
+fp dp[1 << MAX_M];
+int dp_arg[1 << MAX_M];
 #endif
 
 vector<int> block_dp(const graph &g, const vector<int> &edges) {
 #ifdef RUN_TESTS
-    vector<DSU           > mask_dsu(1 << 16);
-    vector<vector<fp>> mask_c(1 << 16);
-    vector<fp        > dp(1 << 16);
-    vector<int           > dp_arg(1 << 16);
+    vector<DSU           > mask_dsu(1 << MAX_M);
+    vector<vector<fp>> mask_c(1 << MAX_M);
+    vector<fp        > dp(1 << MAX_M);
+    vector<int           > dp_arg(1 << MAX_M);
 #endif
     int m = edges.size();
 #ifdef MINGW
     mask_dsu[0].init(g.n);
     mask_c[0] = g.c;
-    for (int mask = 1; mask < (1 << m); ++mask) {
+    for (unsigned int mask = 1; mask < (1 << m); ++mask) {
         dp[mask] = numeric_limits<fp>::max();
+#ifdef MSVC
+        int bit = countr_zero((unsigned int)mask);
+#else
         int bit = __builtin_ctz(mask);
+#endif
         mask_dsu[mask] = mask_dsu[mask ^ (1 << bit)];
         mask_c[mask] = mask_c[mask ^ (1 << bit)];
         auto [u, v, w] = g.edges[edges[bit]];
@@ -40,7 +46,7 @@ vector<int> block_dp(const graph &g, const vector<int> &edges) {
             mask_c[mask][u] = c_result;
         }
     }
-    for (int mask = 0; mask < (1 << m) - 1; ++mask) {
+    for (unsigned int mask = 0; mask < (1 << m) - 1; ++mask) {
         for (int bit = 0; bit < m; ++bit) {
             if (mask & (1 << bit)) continue;
             fp cost = 0.0;
